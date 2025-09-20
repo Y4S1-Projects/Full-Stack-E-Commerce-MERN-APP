@@ -23,7 +23,10 @@ const deleteAddToCartProduct = require('../controller/user/deleteAddToCartProduc
 const searchProduct = require('../controller/product/searchProduct')
 const filterProductController = require('../controller/product/filterProduct')
 
-
+// Test endpoint for security headers
+router.get("/test", (req, res) => {
+    res.json({ message: "Security headers test endpoint", status: "success" })
+})
 
 router.post("/signup",userSignUpController)
 router.post("/signin",userSignInController)
