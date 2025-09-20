@@ -4,14 +4,14 @@ const path = require('path');
 
 const app = express();
 
-// Security Headers for Frontend
+// Security Headers for Frontend - Balanced approach for React
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            scriptSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "blob:", "http://res.cloudinary.com", "https://res.cloudinary.com"],
             connectSrc: ["'self'", "http://localhost:8080", "https://api.cloudinary.com"],
             frameSrc: ["'none'"],

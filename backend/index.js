@@ -9,14 +9,14 @@ const router = require('./routes')
 
 const app = express()
 
-// Security Headers Configuration
+// Security Headers Configuration - Balanced approach for React app
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+            scriptSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "blob:", "http://res.cloudinary.com", "https://res.cloudinary.com"],
             connectSrc: ["'self'", "ws://localhost:3001", "ws://localhost:3000", "http://localhost:3001", "http://localhost:3000", "https://api.cloudinary.com"],
             frameSrc: ["'none'"],
