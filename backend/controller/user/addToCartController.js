@@ -5,6 +5,15 @@ const addToCartController = async(req,res)=>{
         const { productId } = req?.body
         const currentUser = req.userId
 
+        // Basic productId validation
+        if (!productId || typeof productId !== 'string') {
+            return res.status(400).json({
+                message: "Invalid product ID",
+                error: true,
+                success: false
+            })
+        }
+
         const isProductAvailable = await addToCartModel.findOne({ productId })
 
         console.log("isProductAvailabl   ",isProductAvailable)
@@ -26,14 +35,12 @@ const addToCartController = async(req,res)=>{
         const newAddToCart = new addToCartModel(payload)
         const saveProduct = await newAddToCart.save()
 
-
         return res.json({
             data : saveProduct,
             message : "Product Added in Cart",
             success : true,
             error : false
         })
-        
 
     }catch(err){
         res.json({
@@ -43,6 +50,5 @@ const addToCartController = async(req,res)=>{
         })
     }
 }
-
 
 module.exports = addToCartController

@@ -1,4 +1,5 @@
 import React, { useCallback, useContext, useEffect, useState } from 'react'
+import DOMPurify from 'dompurify' // Add this import
 import  { useNavigate, useParams } from 'react-router-dom'
 import SummaryApi from '../common'
 import { FaStar } from "react-icons/fa";
@@ -31,8 +32,12 @@ const ProductDetails = () => {
   const [zoomImage,setZoomImage] = useState(false)
 
   const { fetchUserAddToCart } = useContext(Context)
-
   const navigate = useNavigate()
+
+  // Add sanitization function
+  const sanitizeText = (text) => {
+    return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+  }
 
   const fetchProductDetails = async()=>{
     setLoading(true)
@@ -50,7 +55,6 @@ const ProductDetails = () => {
 
     setData(dataReponse?.data)
     setActiveImage(dataReponse?.data?.productImage[0])
-
   }
 
   console.log("data",data)
@@ -81,7 +85,6 @@ const ProductDetails = () => {
     setZoomImage(false)
   }
 
-
   const handleAddToCart = async(e,id) =>{
     await addToCart(e,id)
     fetchUserAddToCart()
@@ -91,7 +94,6 @@ const ProductDetails = () => {
     await addToCart(e,id)
     fetchUserAddToCart()
     navigate("/cart")
-
   }
 
   return (
@@ -186,9 +188,15 @@ const ProductDetails = () => {
             ) : 
             (
               <div className='flex flex-col gap-1'>
-                <p className='bg-red-200 text-red-600 px-2 rounded-full inline-block w-fit'>{data?.brandName}</p>
-                <h2 className='text-2xl lg:text-4xl font-medium'>{data?.productName}</h2>
-                <p className='capitalize text-slate-400'>{data?.category}</p>
+                <p className='bg-red-200 text-red-600 px-2 rounded-full inline-block w-fit'>
+                  {sanitizeText(data?.brandName)}
+                </p>
+                <h2 className='text-2xl lg:text-4xl font-medium'>
+                  {sanitizeText(data?.productName)}
+                </h2>
+                <p className='capitalize text-slate-400'>
+                  {sanitizeText(data?.category)}
+                </p>
 
                 <div className='text-red-600 flex items-center gap-1'>
                     <FaStar/>
@@ -210,7 +218,7 @@ const ProductDetails = () => {
 
                 <div>
                   <p className='text-slate-600 font-medium my-1'>Description : </p>
-                  <p>{data?.description}</p>
+                  <p>{sanitizeText(data?.description)}</p>
                 </div>
               </div>
             )
@@ -218,16 +226,11 @@ const ProductDetails = () => {
 
       </div>
 
-
-
       {
         data.category && (
           <CategroyWiseProductDisplay category={data?.category} heading={"Recommended Product"}/>
         )
       }
-     
-
-
 
     </div>
   )

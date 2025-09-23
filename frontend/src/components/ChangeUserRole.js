@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import DOMPurify from 'dompurify' // Add this import
 import ROLE from '../common/role'
 import { IoMdClose } from "react-icons/io";
 import SummaryApi from '../common';
@@ -14,9 +15,13 @@ const ChangeUserRole = ({
 }) => {
     const [userRole,setUserRole] = useState(role)
 
+    // Add sanitization function
+    const sanitizeInput = (input) => {
+        return DOMPurify.sanitize(input || '', { ALLOWED_TAGS: [] });
+    }
+
     const handleOnChangeSelect = (e) => {
         setUserRole(e.target.value)
-
         console.log(e.target.value)
     }
 
@@ -42,7 +47,6 @@ const ChangeUserRole = ({
         }
 
         console.log("role updated",responseData)
-
     }
 
   return (
@@ -55,8 +59,8 @@ const ChangeUserRole = ({
 
             <h1 className='pb-4 text-lg font-medium'>Change User Role</h1>
 
-             <p>Name : {name}</p>   
-             <p>Email : {email}</p> 
+             <p>Name : {sanitizeInput(name)}</p>   {/* Sanitize name display */}
+             <p>Email : {sanitizeInput(email)}</p>  {/* Sanitize email display */}
 
             <div className='flex items-center justify-between my-4'>
                 <p>Role :</p>  
@@ -70,7 +74,6 @@ const ChangeUserRole = ({
                     }
                 </select>
             </div>
-
 
             <button className='w-fit mx-auto block  py-1 px-3 rounded-full bg-red-600 text-white hover:bg-red-700' onClick={updateUserRole}>Change Role</button>
        </div>

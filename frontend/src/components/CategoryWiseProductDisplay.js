@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
+import DOMPurify from 'dompurify'
 import fetchCategoryWiseProduct from '../helpers/fetchCategoryWiseProduct'
 import displayINRCurrency from '../helpers/displayCurrency'
 import { FaAngleLeft, FaAngleRight } from 'react-icons/fa6'
@@ -35,6 +36,10 @@ const CategroyWiseProductDisplay = ({category, heading}) => {
         fetchData()
     },[])
 
+    // Sanitize helper
+    const sanitizeText = (text) => {
+        return DOMPurify.sanitize(text, { ALLOWED_TAGS: [] });
+    }
 
 
 
@@ -73,8 +78,12 @@ const CategroyWiseProductDisplay = ({category, heading}) => {
                                     <img src={product.productImage[0]} className='object-scale-down h-full hover:scale-110 transition-all mix-blend-multiply'/>
                                 </div>
                                 <div className='p-4 grid gap-3'>
-                                    <h2 className='font-medium text-base md:text-lg text-ellipsis line-clamp-1 text-black'>{product?.productName}</h2>
-                                    <p className='capitalize text-slate-500'>{product?.category}</p>
+                                    <h2 className='font-medium text-base md:text-lg text-ellipsis line-clamp-1 text-black'>
+                                        {sanitizeText(product?.productName)}
+                                    </h2>
+                                    <p className='capitalize text-slate-500'>
+                                        {sanitizeText(product?.category)}
+                                    </p>
                                     <div className='flex gap-3'>
                                         <p className='text-red-600 font-medium'>{ displayINRCurrency(product?.sellingPrice) }</p>
                                         <p className='text-slate-500 line-through'>{ displayINRCurrency(product?.price)  }</p>

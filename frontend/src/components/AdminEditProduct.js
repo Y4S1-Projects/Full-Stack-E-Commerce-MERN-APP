@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import DOMPurify from 'dompurify'
 import { CgClose } from "react-icons/cg";
 import productCategory from '../helpers/productCategory';
 import { FaCloudUploadAlt } from "react-icons/fa";
@@ -27,14 +28,21 @@ const AdminEditProduct = ({
   const [openFullScreenImage,setOpenFullScreenImage] = useState(false)
   const [fullScreenImage,setFullScreenImage] = useState("")
 
+  // XSS Protection: Sanitize input function
+  const sanitizeInput = (input) => {
+    return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }); // Only allow text, no HTML
+  }
 
   const handleOnChange = (e)=>{
       const { name, value} = e.target
 
+      // Sanitize input before setting state
+      const sanitizedValue = sanitizeInput(value);
+
       setData((preve)=>{
         return{
           ...preve,
-          [name]  : value
+          [name]  : sanitizedValue
         }
       })
   }
@@ -66,7 +74,6 @@ const AdminEditProduct = ({
     
   }
 
-
   {/**upload product */}
   const handleSubmit = async(e) =>{
     e.preventDefault()
@@ -88,12 +95,9 @@ const AdminEditProduct = ({
         fetchdata()
     }
 
-
     if(responseData.error){
       toast.error(responseData?.message)
     }
-  
-
   }
 
   return (
@@ -119,7 +123,6 @@ const AdminEditProduct = ({
            className='p-2 bg-slate-100 border rounded'
            required
          />
-
 
          <label htmlFor='brandName' className='mt-3'>Brand Name :</label>
          <input 
@@ -162,10 +165,10 @@ const AdminEditProduct = ({
                          {
                            data.productImage.map((el,index)=>{
                              return(
-                               <div className='relative group'>
+                               <div className='relative group' key={index}>
                                    <img 
                                      src={el} 
-                                     alt={el} 
+                                     alt={sanitizeInput(`Product ${index + 1}`)}
                                      width={80} 
                                      height={80}  
                                      className='bg-slate-100 border cursor-pointer'  
@@ -202,7 +205,6 @@ const AdminEditProduct = ({
              required
            />
 
-
            <label htmlFor='sellingPrice' className='mt-3'>Selling Price :</label>
            <input 
              type='number' 
@@ -226,19 +228,10 @@ const AdminEditProduct = ({
            >
            </textarea>
 
-
-
-
-
            <button className='px-3 py-2 bg-red-600 text-white mb-10 hover:bg-red-700'>Update Product</button>
        </form> 
 
-
-
-   
     </div>
-
-
 
     {/***display image full screen */}
     {
@@ -246,7 +239,6 @@ const AdminEditProduct = ({
        <DisplayImage onClose={()=>setOpenFullScreenImage(false)} imgUrl={fullScreenImage}/>
      )
     }
-     
 
  </div>
   )

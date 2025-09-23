@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify' // Add this import
 import SummaryApi from '../common'
 import { toast } from 'react-toastify'
 import moment from 'moment'
@@ -15,6 +16,11 @@ const AllUsers = () => {
         _id  : ""
     })
 
+    // Add sanitization function
+    const sanitizeText = (text) => {
+        return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+    }
+
     const fetchAllUsers = async() =>{
         const fetchData = await fetch(SummaryApi.allUser.url,{
             method : SummaryApi.allUser.method,
@@ -30,7 +36,6 @@ const AllUsers = () => {
         if(dataResponse.error){
             toast.error(dataResponse.message)
         }
-
     }
 
     useEffect(()=>{
@@ -54,18 +59,17 @@ const AllUsers = () => {
                 {
                     allUser.map((el,index) => {
                         return(
-                            <tr>
+                            <tr key={el._id || index}>
                                 <td>{index+1}</td>
-                                <td>{el?.name}</td>
-                                <td>{el?.email}</td>
-                                <td>{el?.role}</td>
+                                <td>{sanitizeText(el?.name)}</td>
+                                <td>{sanitizeText(el?.email)}</td>
+                                <td>{sanitizeText(el?.role)}</td>
                                 <td>{moment(el?.createdAt).format('LL')}</td>
                                 <td>
                                     <button className='bg-green-100 p-2 rounded-full cursor-pointer hover:bg-green-500 hover:text-white' 
                                     onClick={()=>{
                                         setUpdateUserDetails(el)
                                         setOpenUpdateRole(true)
-
                                     }}
                                     >
                                         <MdModeEdit/>

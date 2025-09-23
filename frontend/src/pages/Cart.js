@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
+import DOMPurify from 'dompurify' // Add this import
 import SummaryApi from '../common'
 import Context from '../context'
 import displayINRCurrency from '../helpers/displayCurrency'
@@ -10,6 +11,10 @@ const Cart = () => {
     const context = useContext(Context)
     const loadingCart = new Array(4).fill(null)
 
+    // Add sanitization function
+    const sanitizeText = (text) => {
+        return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+    }
 
     const fetchData = async() =>{
         
@@ -21,14 +26,11 @@ const Cart = () => {
             },
         })
        
-
         const responseData = await response.json()
 
         if(responseData.success){
             setData(responseData.data)
         }
-
-
     }
 
     const handleLoading = async() =>{
@@ -40,7 +42,6 @@ const Cart = () => {
         handleLoading()
          setLoading(false)
     },[])
-
 
     const increaseQty = async(id,qty) =>{
         const response = await fetch(SummaryApi.updateCartProduct.url,{
@@ -59,12 +60,10 @@ const Cart = () => {
 
         const responseData = await response.json()
 
-
         if(responseData.success){
             fetchData()
         }
     }
-
 
     const decraseQty = async(id,qty) =>{
        if(qty >= 2){
@@ -83,7 +82,6 @@ const Cart = () => {
             })
 
             const responseData = await response.json()
-
 
             if(responseData.success){
                 fetchData()
@@ -115,6 +113,7 @@ const Cart = () => {
 
     const totalQty = data.reduce((previousValue,currentValue)=> previousValue + currentValue.quantity,0)
     const totalPrice = data.reduce((preve,curr)=> preve + (curr.quantity * curr?.productId?.sellingPrice) ,0)
+
   return (
     <div className='container mx-auto'>
         
@@ -151,8 +150,12 @@ const Cart = () => {
                                         <MdDelete/>
                                     </div>
 
-                                    <h2 className='text-lg lg:text-xl text-ellipsis line-clamp-1'>{product?.productId?.productName}</h2>
-                                    <p className='capitalize text-slate-500'>{product?.productId.category}</p>
+                                    <h2 className='text-lg lg:text-xl text-ellipsis line-clamp-1'>
+                                        {sanitizeText(product?.productId?.productName)}
+                                    </h2>
+                                    <p className='capitalize text-slate-500'>
+                                        {sanitizeText(product?.productId?.category)}
+                                    </p>
                                     <div className='flex items-center justify-between'>
                                             <p className='text-red-600 font-medium text-lg'>{displayINRCurrency(product?.productId?.sellingPrice)}</p>
                                             <p className='text-slate-600 font-semibold text-lg'>{displayINRCurrency(product?.productId?.sellingPrice  * product?.quantity)}</p>
@@ -169,7 +172,6 @@ const Cart = () => {
                         )
                     }
                 </div>
-
 
                 {/***summary  */}
                 <div className='mt-5 lg:mt-0 w-full max-w-sm'>

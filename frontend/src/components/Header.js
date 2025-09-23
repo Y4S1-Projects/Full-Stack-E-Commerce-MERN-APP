@@ -1,4 +1,5 @@
 import React, { useContext, useState } from 'react'
+import DOMPurify from 'dompurify' // Add this import
 import Logo from './Logo'
 import { GrSearch } from "react-icons/gr";
 import { FaRegCircleUser } from "react-icons/fa6";
@@ -22,6 +23,11 @@ const Header = () => {
   const searchQuery = URLSearch.getAll("q")
   const [search,setSearch] = useState(searchQuery)
 
+  // Add sanitization function
+  const sanitizeInput = (input) => {
+    return DOMPurify.sanitize(input || '', { ALLOWED_TAGS: [] });
+  }
+
   const handleLogout = async() => {
     const fetchData = await fetch(SummaryApi.logout_user.url,{
       method : SummaryApi.logout_user.method,
@@ -39,19 +45,20 @@ const Header = () => {
     if(data.error){
       toast.error(data.message)
     }
-
   }
 
   const handleSearch = (e)=>{
     const { value } = e.target
-    setSearch(value)
+    const sanitizedValue = sanitizeInput(value) // Sanitize search input
+    setSearch(sanitizedValue)
 
-    if(value){
-      navigate(`/search?q=${value}`)
+    if(sanitizedValue){
+      navigate(`/search?q=${encodeURIComponent(sanitizedValue)}`) // URL encode for safety
     }else{
       navigate("/search")
     }
   }
+
   return (
     <header className='h-16 shadow-md bg-white fixed w-full z-40'>
       <div className=' h-full container mx-auto flex items-center px-4 justify-between'>
@@ -62,12 +69,17 @@ const Header = () => {
             </div>
 
             <div className='hidden lg:flex items-center w-full justify-between max-w-sm border rounded-full focus-within:shadow pl-2'>
-                <input type='text' placeholder='search product here...' className='w-full outline-none' onChange={handleSearch} value={search}/>
+                <input 
+                  type='text' 
+                  placeholder='search product here...' 
+                  className='w-full outline-none' 
+                  onChange={handleSearch} 
+                  value={search}
+                />
                 <div className='text-lg min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white'>
                   <GrSearch />
                 </div>
             </div>
-
 
             <div className='flex items-center gap-7'>
                 
@@ -78,7 +90,11 @@ const Header = () => {
                       <div className='text-3xl cursor-pointer relative flex justify-center' onClick={()=>setMenuDisplay(preve => !preve)}>
                         {
                           user?.profilePic ? (
-                            <img src={user?.profilePic} className='w-10 h-10 rounded-full' alt={user?.name} />
+                            <img 
+                              src={user?.profilePic} 
+                              className='w-10 h-10 rounded-full' 
+                              alt={sanitizeInput(user?.name) || 'User profile'} // Sanitize alt attribute
+                            />
                           ) : (
                             <FaRegCircleUser/>
                           )
@@ -86,7 +102,6 @@ const Header = () => {
                       </div>
                     )
                   }
-                  
                   
                   {
                     menuDisplay && (
@@ -97,27 +112,23 @@ const Header = () => {
                               <Link to={"/admin-panel/all-products"} className='whitespace-nowrap hidden md:block hover:bg-slate-100 p-2' onClick={()=>setMenuDisplay(preve => !preve)}>Admin Panel</Link>
                             )
                           }
-                         
                         </nav>
                       </div>
                     )
                   }
-                 
                 </div>
 
-                  {
-                     user?._id && (
-                      <Link to={"/cart"} className='text-2xl relative'>
-                          <span><FaShoppingCart/></span>
-      
-                          <div className='bg-red-600 text-white w-5 h-5 rounded-full p-1 flex items-center justify-center absolute -top-2 -right-3'>
-                              <p className='text-sm'>{context?.cartProductCount}</p>
-                          </div>
-                      </Link>
-                      )
-                  }
-              
-
+                {
+                   user?._id && (
+                    <Link to={"/cart"} className='text-2xl relative'>
+                        <span><FaShoppingCart/></span>
+    
+                        <div className='bg-red-600 text-white w-5 h-5 rounded-full p-1 flex items-center justify-center absolute -top-2 -right-3'>
+                            <p className='text-sm'>{context?.cartProductCount}</p>
+                        </div>
+                    </Link>
+                    )
+                }
 
                 <div>
                   {
@@ -128,7 +139,6 @@ const Header = () => {
                     <Link to={"/login"} className='px-3 py-1 rounded-full text-white bg-red-600 hover:bg-red-700'>Login</Link>
                     )
                   }
-                    
                 </div>
 
             </div>
