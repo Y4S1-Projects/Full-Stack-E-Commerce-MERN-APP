@@ -7,6 +7,15 @@ const updateAddToCartProduct = async(req,res)=>{
 
         const qty = req.body.quantity
 
+        // Validate quantity is a positive number
+        if (qty !== undefined && (isNaN(qty) || qty < 1 || qty > 100)) {
+            return res.status(400).json({
+                message: "Invalid quantity. Must be between 1 and 100",
+                error: true,
+                success: false
+            })
+        }
+
         const updateProduct = await addToCartModel.updateOne({_id : addToCartProductId},{
             ...(qty && {quantity : qty})
         })

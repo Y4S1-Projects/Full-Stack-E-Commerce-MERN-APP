@@ -1,4 +1,5 @@
 import React, { useContext } from 'react'
+import DOMPurify from 'dompurify'
 import scrollTop from '../helpers/scrollTop'
 import displayINRCurrency from '../helpers/displayCurrency'
 import Context from '../context'
@@ -8,6 +9,11 @@ import { Link } from 'react-router-dom'
 const VerticalCard = ({loading,data = []}) => {
     const loadingList = new Array(13).fill(null)
     const { fetchUserAddToCart } = useContext(Context)
+
+    // sanitization function
+    const sanitizeText = (text) => {
+        return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+    } // Only allow text, no HTML
 
     const handleAddToCart = async(e,id)=>{
        await addToCart(e,id)
@@ -44,8 +50,12 @@ const VerticalCard = ({loading,data = []}) => {
                              <img src={product?.productImage[0]} className='object-scale-down h-full hover:scale-110 transition-all mix-blend-multiply'/>
                          </div>
                          <div className='p-4 grid gap-3'>
-                             <h2 className='font-medium text-base md:text-lg text-ellipsis line-clamp-1 text-black'>{product?.productName}</h2>
-                             <p className='capitalize text-slate-500'>{product?.category}</p>
+                             <h2 className='font-medium text-base md:text-lg text-ellipsis line-clamp-1 text-black'>
+                                {sanitizeText(product?.productName)}
+                             </h2>
+                             <p className='capitalize text-slate-500'>
+                                {sanitizeText(product?.category)}
+                             </p>
                              <div className='flex gap-3'>
                                  <p className='text-red-600 font-medium'>{ displayINRCurrency(product?.sellingPrice) }</p>
                                  <p className='text-slate-500 line-through'>{ displayINRCurrency(product?.price)  }</p>

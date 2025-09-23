@@ -6,6 +6,38 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 const router = require('./routes');
 
+
+const app = express()
+
+// Use helmet for comprehensive security headers
+
+// Security Headers Configuration - Balanced approach for React app
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "blob:", "http://res.cloudinary.com", "https://res.cloudinary.com"],
+            connectSrc: ["'self'", "ws://localhost:3001", "ws://localhost:3000", "http://localhost:3001", "http://localhost:3000", "https://api.cloudinary.com"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            manifestSrc: ["'self'"],
+            workerSrc: ["'self'", "blob:"],
+            childSrc: ["'self'", "blob:"],
+        }
+    },
+    frameguard: {
+        action: 'deny'
+    },
+        hidePoweredBy: true,
+    contentTypeOptions: { nosniff: true },
+    frameguard: { action: 'deny' },
+    xssFilter: true
+}))
+
 const app = express();
 
 // -------------------------
@@ -71,6 +103,7 @@ const corsOptions = {
   methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
   // Do not fix allowedHeaders; let cors mirror Access-Control-Request-Headers
 };
+
 
 app.use(cors(corsOptions));
 
