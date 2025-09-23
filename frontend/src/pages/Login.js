@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SummaryApi from '../common';
 import { toast } from 'react-toastify';
 import Context from '../context';
+import { setJwtSession } from '../helpers/jwtSession';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -48,9 +49,12 @@ const Login = () => {
 
     if (dataApi.success) {
       toast.success(dataApi.message);
+      // Use returned JWT token to fetch user details and cart count
+      const token = dataApi.data;
+      setJwtSession(token); // Store JWT in localStorage for session persistence
+      await fetchUserDetails(token);
+      await fetchUserAddToCart(token);
       navigate('/');
-      fetchUserDetails();
-      fetchUserAddToCart();
     }
 
     if (dataApi.error) {
@@ -110,7 +114,7 @@ const Login = () => {
 
           <p className="my-5">
             Don't have account ?{' '}
-            <Link to={'/sign-up'} className="text-red-600  hover:text-red-700 hover:underline">
+            <Link to={'/sign-up'} className="text-red-600 hover:text-red-700 hover:underline">
               Sign up
             </Link>
           </p>

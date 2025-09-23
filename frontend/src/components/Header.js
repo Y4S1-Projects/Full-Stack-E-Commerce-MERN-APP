@@ -1,4 +1,6 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
+import { isSessionExpired, clearSession } from '../helpers/session';
+import { useAuth0 } from '@auth0/auth0-react';
 import Logo from './Logo';
 import { GrSearch } from 'react-icons/gr';
 import { FaRegCircleUser } from 'react-icons/fa6';
@@ -13,14 +15,34 @@ import Context from '../context';
 
 const Header = () => {
   const user = useSelector((state) => state?.user?.user);
+  const { logout } = useAuth0();
+  const navigate = useNavigate();
+  // Auto-logout if session expired
+  useEffect(() => {
+    if (user?._id && isSessionExpired()) {
+      clearSession();
+      logout({ returnTo: window.location.origin });
+      navigate('/');
+    }
+  }, [user, logout, navigate]);
   const dispatch = useDispatch();
   const [menuDisplay, setMenuDisplay] = useState(false);
   const context = useContext(Context);
-  const navigate = useNavigate();
   const searchInput = useLocation();
   const URLSearch = new URLSearchParams(searchInput?.search);
-  const searchQuery = URLSearch.getAll('q');
+  const searchQuery = URLSearch.get('q') || '';
   const [search, setSearch] = useState(searchQuery);
+
+  // Keep search input in sync with URL
+  React.useEffect(() => {
+    const urlSearch = new URLSearchParams(searchInput?.search);
+    setSearch(urlSearch.get('q') || '');
+  }, [searchInput.search]);
+
+  // Close menu on logout
+  React.useEffect(() => {
+    if (!user?._id) setMenuDisplay(false);
+  }, [user]);
 
   // Accept accessToken as optional param
   const handleLogout = async (accessToken = null) => {

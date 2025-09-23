@@ -5,6 +5,8 @@ import { FaAngleLeft, FaAngleRight } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import addToCart from '../helpers/addToCart';
 import Context from '../context';
+import { useAuth0 } from '@auth0/auth0-react';
+import { getJwtSession, isJwtSessionExpired } from '../helpers/jwtSession';
 
 const HorizontalCardProduct = ({ category, heading }) => {
   const [data, setData] = useState([]);
@@ -15,10 +17,23 @@ const HorizontalCardProduct = ({ category, heading }) => {
   const scrollElement = useRef();
 
   const { fetchUserAddToCart } = useContext(Context);
+  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
 
   const handleAddToCart = async (e, id) => {
-    await addToCart(e, id);
-    fetchUserAddToCart();
+    let accessToken = null;
+    if (isAuthenticated) {
+      accessToken = await getAccessTokenSilently();
+    } else {
+      // fallback to JWT session
+      const jwt = getJwtSession();
+      if (!jwt || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+      accessToken = jwt;
+    }
+    await addToCart(e, id, accessToken);
+    fetchUserAddToCart(accessToken);
   };
 
   // Accept accessToken as optional param
@@ -27,13 +42,26 @@ const HorizontalCardProduct = ({ category, heading }) => {
     const categoryProduct = await fetchCategoryWiseProduct(category, accessToken);
     setLoading(false);
 
-    console.log('horizontal data', categoryProduct.data);
     setData(categoryProduct.data);
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Try to get token for protected endpoints
+    const getTokenAndFetch = async () => {
+      let accessToken = null;
+      if (isAuthenticated) {
+        accessToken = await getAccessTokenSilently();
+      } else {
+        const jwt = getJwtSession();
+        if (jwt && !isJwtSessionExpired()) {
+          accessToken = jwt;
+        }
+      }
+      await fetchData(accessToken);
+    };
+    getTokenAndFetch();
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
 
   const scrollRight = () => {
     scrollElement.current.scrollLeft += 300;

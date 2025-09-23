@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import { Outlet } from 'react-router-dom';
 import Header from './components/Header';
@@ -6,6 +5,9 @@ import Footer from './components/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { setSessionExpiry, isSessionExpired, clearSession } from './helpers/session';
+import { getJwtSession, isJwtSessionExpired, clearJwtSession } from './helpers/jwtSession';
 import { useAuth0 } from '@auth0/auth0-react';
 import SummaryApi from './common';
 import Context from './context';
@@ -13,64 +15,78 @@ import { useDispatch } from 'react-redux';
 import { setUserDetails } from './store/userSlice';
 
 function App() {
-  const { getAccessTokenSilently, isAuthenticated } = useAuth0();
+  const { getAccessTokenSilently, isAuthenticated, logout } = useAuth0();
   const dispatch = useDispatch();
   const [cartProductCount, setCartProductCount] = useState(0);
+  const navigate = useNavigate();
 
-  // Accept accessToken as optional param
-  const fetchUserDetails = async (accessToken = null) => {
-    const headers = {};
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
+  // Always require accessToken for protected endpoints
+  const fetchUserDetails = async (accessToken) => {
+    if (!accessToken) return;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
     try {
       const dataResponse = await fetch(SummaryApi.current_user.url, {
         method: SummaryApi.current_user.method,
         credentials: 'include',
         headers,
       });
-      // Check if response is JSON
       const contentType = dataResponse.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const dataApi = await dataResponse.json();
         if (dataApi.success) {
           dispatch(setUserDetails(dataApi.data));
         }
-      } else {
-        // Not JSON, likely an error page
-        // Optionally handle error (e.g. show login prompt)
       }
     } catch (err) {
       // Optionally handle fetch error
     }
   };
 
-  const fetchUserAddToCart = async (accessToken = null) => {
-    const headers = {};
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
+  const fetchUserAddToCart = async (accessToken) => {
+    if (!accessToken) return;
+    const headers = {
+      Authorization: `Bearer ${accessToken}`,
+    };
     try {
       const dataResponse = await fetch(SummaryApi.addToCartProductCount.url, {
         method: SummaryApi.addToCartProductCount.method,
         credentials: 'include',
         headers,
       });
-      // Check if response is JSON
       const contentType = dataResponse.headers.get('content-type');
       if (contentType && contentType.includes('application/json')) {
         const dataApi = await dataResponse.json();
         setCartProductCount(dataApi?.data?.count);
-      } else {
-        // Not JSON, likely an error page
-        // Optionally handle error (e.g. show login prompt)
       }
     } catch (err) {
       // Optionally handle fetch error
     }
   };
 
+  // Session expiry logic
   useEffect(() => {
+    // Auth0 session logic (if using Auth0)
+    if (isAuthenticated) {
+      setSessionExpiry();
+    } else if (isSessionExpired()) {
+      clearSession();
+      logout({ returnTo: window.location.origin });
+      navigate('/');
+    }
+
+    // Browser JWT session logic
+    const jwt = getJwtSession();
+    if (jwt && !isJwtSessionExpired()) {
+      // Restore user state from JWT
+      fetchUserDetails(jwt);
+      fetchUserAddToCart(jwt);
+    } else if (isJwtSessionExpired()) {
+      clearJwtSession();
+      dispatch(setUserDetails(null));
+    }
+
     const fetchProtectedData = async () => {
       if (isAuthenticated) {
         try {
@@ -81,10 +97,10 @@ function App() {
           // Optionally handle token errors
         }
       }
-      // If not authenticated, do not call protected endpoints
     };
     fetchProtectedData();
-  }, [isAuthenticated, getAccessTokenSilently]);
+    // eslint-disable-next-line
+  }, [isAuthenticated, getAccessTokenSilently, logout, navigate]);
   return (
     <>
       <Context.Provider

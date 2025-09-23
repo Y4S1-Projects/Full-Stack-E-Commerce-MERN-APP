@@ -1,17 +1,20 @@
 import SummaryApi from '../common';
 import { toast } from 'react-toastify';
 
-// Accept accessToken as optional param
-const addToCart = async (e, id, accessToken = null) => {
+// Always require accessToken
+const addToCart = async (e, id, accessToken) => {
   e?.stopPropagation();
   e?.preventDefault();
 
+  if (!accessToken) {
+    toast.error('Not authenticated');
+    return { error: true, message: 'No access token' };
+  }
+
   const headers = {
     'content-type': 'application/json',
+    Authorization: `Bearer ${accessToken}`,
   };
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
   const response = await fetch(SummaryApi.addToCartProduct.url, {
     method: SummaryApi.addToCartProduct.method,
     credentials: 'include',

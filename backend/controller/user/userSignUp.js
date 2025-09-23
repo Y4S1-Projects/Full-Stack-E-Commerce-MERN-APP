@@ -1,17 +1,10 @@
 const userModel = require('../../models/userModel');
-const bcrypt = require('bcryptjs');
+const axios = require('axios');
+const { getManagementToken, AUTH0_DOMAIN, AUTH0_CONNECTION } = require('../../config/auth0');
 
 async function userSignUpController(req, res) {
   try {
-    const { email, password, name } = req.body;
-
-    const user = await userModel.findOne({ email });
-
-    console.log('user', user);
-
-    if (user) {
-      throw new Error('Already user exits.');
-    }
+    const { email, password, name, profilePic } = req.body;
 
     if (!email) {
       throw new Error('Please provide email');
@@ -23,19 +16,48 @@ async function userSignUpController(req, res) {
       throw new Error('Please provide name');
     }
 
-    const salt = bcrypt.genSaltSync(10);
-    const hashPassword = await bcrypt.hashSync(password, salt);
-
-    if (!hashPassword) {
-      throw new Error('Something is wrong');
+    // Check if user already exists in MongoDB
+    const user = await userModel.findOne({ email });
+    if (user) {
+      throw new Error('Already user exists.');
     }
 
-    const payload = {
-      ...req.body,
-      role: 'CUSTOMER',
-      password: hashPassword,
-    };
+    // 1. Create user in Auth0
+    const mgmtToken = await getManagementToken();
+    let auth0User;
+    try {
+      const response = await axios.post(
+        `https://${AUTH0_DOMAIN}/api/v2/users`,
+        {
+          email,
+          password,
+          connection: AUTH0_CONNECTION,
+          name,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${mgmtToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      auth0User = response.data;
+    } catch (err) {
+      return res.status(400).json({
+        message: err.response?.data?.message || err.message,
+        error: true,
+        success: false,
+      });
+    }
 
+    // 2. Save user in MongoDB with auth0Id
+    const payload = {
+      email,
+      name,
+      profilePic,
+      role: 'CUSTOMER',
+      auth0Id: auth0User.user_id,
+    };
     const userData = new userModel(payload);
     const saveUser = await userData.save();
 

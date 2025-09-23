@@ -1,8 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
 import SummaryApi from '../common';
 import Context from '../context';
 import displayINRCurrency from '../helpers/displayCurrency';
 import { MdDelete } from 'react-icons/md';
+import { getJwtSession, isJwtSessionExpired } from '../helpers/jwtSession';
 
 const Cart = () => {
   const [data, setData] = useState([]);
@@ -10,45 +12,58 @@ const Cart = () => {
   const context = useContext(Context);
   const loadingCart = new Array(4).fill(null);
 
-  // Accept accessToken as optional param
-  const fetchData = async (accessToken = null) => {
+  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
+
+  // Support both Auth0 and legacy JWT session
+  const fetchData = async () => {
+    let accessToken = null;
+    if (isAuthenticated) {
+      accessToken = await getAccessTokenSilently();
+    } else {
+      const jwt = getJwtSession();
+      if (!jwt || isJwtSessionExpired()) {
+        setData([]);
+        return;
+      }
+      accessToken = jwt;
+    }
     const headers = {
       'content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
     };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
     const response = await fetch(SummaryApi.addToCartProductView.url, {
       method: SummaryApi.addToCartProductView.method,
       credentials: 'include',
       headers,
     });
-
     const responseData = await response.json();
-
     if (responseData.success) {
       setData(responseData.data);
     }
   };
 
-  const handleLoading = async () => {
-    await fetchData();
-  };
-
   useEffect(() => {
     setLoading(true);
-    handleLoading();
-    setLoading(false);
-  }, []);
+    fetchData().finally(() => setLoading(false));
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
 
-  // Accept accessToken as optional param
-  const increaseQty = async (id, qty, accessToken = null) => {
+  const increaseQty = async (id, qty) => {
+    let accessToken = null;
+    if (isAuthenticated) {
+      accessToken = await getAccessTokenSilently();
+    } else {
+      const jwt = getJwtSession();
+      if (!jwt || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+      accessToken = jwt;
+    }
     const headers = {
       'content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
     };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
     const response = await fetch(SummaryApi.updateCartProduct.url, {
       method: SummaryApi.updateCartProduct.method,
       credentials: 'include',
@@ -58,49 +73,60 @@ const Cart = () => {
         quantity: qty + 1,
       }),
     });
-
     const responseData = await response.json();
-
     if (responseData.success) {
       fetchData();
     }
   };
 
-  // Accept accessToken as optional param
-  const decraseQty = async (id, qty, accessToken = null) => {
-    if (qty >= 2) {
-      const headers = {
-        'content-type': 'application/json',
-      };
-      if (accessToken) {
-        headers['Authorization'] = `Bearer ${accessToken}`;
+  const decraseQty = async (id, qty) => {
+    if (qty < 2) return;
+    let accessToken = null;
+    if (isAuthenticated) {
+      accessToken = await getAccessTokenSilently();
+    } else {
+      const jwt = getJwtSession();
+      if (!jwt || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
       }
-      const response = await fetch(SummaryApi.updateCartProduct.url, {
-        method: SummaryApi.updateCartProduct.method,
-        credentials: 'include',
-        headers,
-        body: JSON.stringify({
-          _id: id,
-          quantity: qty - 1,
-        }),
-      });
-
-      const responseData = await response.json();
-
-      if (responseData.success) {
-        fetchData();
-      }
+      accessToken = jwt;
+    }
+    const headers = {
+      'content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    };
+    const response = await fetch(SummaryApi.updateCartProduct.url, {
+      method: SummaryApi.updateCartProduct.method,
+      credentials: 'include',
+      headers,
+      body: JSON.stringify({
+        _id: id,
+        quantity: qty - 1,
+      }),
+    });
+    const responseData = await response.json();
+    if (responseData.success) {
+      fetchData();
     }
   };
 
-  // Accept accessToken as optional param
-  const deleteCartProduct = async (id, accessToken = null) => {
+  const deleteCartProduct = async (id) => {
+    let accessToken = null;
+    if (isAuthenticated) {
+      accessToken = await getAccessTokenSilently();
+    } else {
+      const jwt = getJwtSession();
+      if (!jwt || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+      accessToken = jwt;
+    }
     const headers = {
       'content-type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
     };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
-    }
     const response = await fetch(SummaryApi.deleteCartProduct.url, {
       method: SummaryApi.deleteCartProduct.method,
       credentials: 'include',
@@ -109,12 +135,10 @@ const Cart = () => {
         _id: id,
       }),
     });
-
     const responseData = await response.json();
-
     if (responseData.success) {
       fetchData();
-      context.fetchUserAddToCart();
+      context.fetchUserAddToCart(accessToken);
     }
   };
 
