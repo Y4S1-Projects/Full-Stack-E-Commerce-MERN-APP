@@ -1,7 +1,7 @@
 const express = require('express')
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
-const helmet = require('helmet') 
+const helmet = require('helmet')
 require('dotenv').config()
 const connectDB = require('./config/db')
 const router = require('./routes')
@@ -9,8 +9,29 @@ const router = require('./routes')
 const app = express()
 
 // Use helmet for comprehensive security headers
+
+// Security Headers Configuration - Balanced approach for React app
 app.use(helmet({
-    hidePoweredBy: true,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            scriptSrc: ["'self'"],
+            imgSrc: ["'self'", "data:", "blob:", "http://res.cloudinary.com", "https://res.cloudinary.com"],
+            connectSrc: ["'self'", "ws://localhost:3001", "ws://localhost:3000", "http://localhost:3001", "http://localhost:3000", "https://api.cloudinary.com"],
+            frameSrc: ["'none'"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            manifestSrc: ["'self'"],
+            workerSrc: ["'self'", "blob:"],
+            childSrc: ["'self'", "blob:"],
+        }
+    },
+    frameguard: {
+        action: 'deny'
+    },
+        hidePoweredBy: true,
     contentTypeOptions: { nosniff: true },
     frameguard: { action: 'deny' },
     xssFilter: true
@@ -34,3 +55,4 @@ connectDB().then(()=>{
         console.log("Server is running "+PORT)
     })
 })
+
