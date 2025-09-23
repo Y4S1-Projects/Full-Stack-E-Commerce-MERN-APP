@@ -1,4 +1,7 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const API_URL = process.env.REACT_APP_API_URL;
+const WS_URL_1 = process.env.REACT_APP_WS_URL_1;
+const WS_URL_2 = process.env.REACT_APP_WS_URL_2;
 
 module.exports = function(app) {
   // Add security headers middleware
@@ -10,7 +13,7 @@ module.exports = function(app) {
       "default-src 'self'; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: http://res.cloudinary.com https://res.cloudinary.com; " +
-      "connect-src 'self' ws://localhost:3001 ws://localhost:3000 http://localhost:8080 https://api.cloudinary.com; " +
+    `connect-src 'self' ${API_URL} ${WS_URL_1} ${WS_URL_2} https://api.cloudinary.com; ` +
       "frame-src 'none'; " +
       "object-src 'none'; " +
       "media-src 'self'; " +
@@ -45,7 +48,7 @@ module.exports = function(app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://localhost:8080',
+      target: process.env.REACT_APP_API_URL,
       changeOrigin: true,
     })
   );
