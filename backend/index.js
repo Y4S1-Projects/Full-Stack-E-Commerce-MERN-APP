@@ -32,6 +32,17 @@ app.use(helmet({
     }
 }))
 
+// Add HSTS only for production
+if (process.env.NODE_ENV === "production") {
+    app.use(
+        helmet.hsts({
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true
+        })
+    );
+}
+
 app.use(cors({
     origin : process.env.FRONTEND_URL,
     credentials : true
