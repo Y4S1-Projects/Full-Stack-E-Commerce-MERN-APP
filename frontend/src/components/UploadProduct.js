@@ -1,37 +1,65 @@
+
 import React, { useState } from 'react'
 import DOMPurify from 'dompurify'
 import { CgClose } from "react-icons/cg";
+
+import React, { useState } from 'react';
+import { CgClose } from 'react-icons/cg';
+
 import productCategory from '../helpers/productCategory';
-import { FaCloudUploadAlt } from "react-icons/fa";
+import { FaCloudUploadAlt } from 'react-icons/fa';
 import uploadImage from '../helpers/uploadImage';
 import DisplayImage from './DisplayImage';
-import { MdDelete } from "react-icons/md";
+import { MdDelete } from 'react-icons/md';
 import SummaryApi from '../common';
-import {toast} from 'react-toastify'
+import { toast } from 'react-toastify';
 
-const UploadProduct = ({
-    onClose,
-    fetchData
-}) => {
-  const [data,setData] = useState({
-    productName : "",
-    brandName : "",
-    category : "",
-    productImage : [],
-    description : "",
-    price : "",
-    sellingPrice : ""
-  })
-  const [openFullScreenImage,setOpenFullScreenImage] = useState(false)
-  const [fullScreenImage,setFullScreenImage] = useState("")
+const UploadProduct = ({ onClose, fetchData }) => {
+  const [data, setData] = useState({
+    productName: '',
+    brandName: '',
+    category: '',
+    productImage: [],
+    description: '',
+    price: '',
+    sellingPrice: '',
+  });
+  const [openFullScreenImage, setOpenFullScreenImage] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState('');
+
+  const handleOnChange = (e) => {
+    const { name, value } = e.target;
+
+    setData((preve) => {
+      return {
+        ...preve,
+        [name]: value,
+      };
+    });
+  };
+
+  const handleUploadProduct = async (e) => {
+    const file = e.target.files[0];
+    const uploadImageCloudinary = await uploadImage(file);
+
 
   // XSS Protection: Sanitize input function
   const sanitizeInput = (input) => {
     return DOMPurify.sanitize(input, { ALLOWED_TAGS: [] }); // Only allow text, no HTML
   }
 
-  const handleOnChange = (e)=>{
-      const { name, value} = e.target
+    setData((preve) => {
+      return {
+        ...preve,
+        productImage: [...preve.productImage, uploadImageCloudinary.url],
+      };
+    });
+  };
+
+
+  const handleDeleteProductImage = async (index) => {
+    console.log('image index', index);
+
 
       // Sanitize input before setting state
       const sanitizedValue = sanitizeInput(value);
@@ -44,32 +72,22 @@ const UploadProduct = ({
       })
   }
 
-  const handleUploadProduct = async(e) => {
-    const file = e.target.files[0]
-    const uploadImageCloudinary = await uploadImage(file)
+    const newProductImage = [...data.productImage];
+    newProductImage.splice(index, 1);
 
-    setData((preve)=>{
-      return{
+
+    setData((preve) => {
+      return {
         ...preve,
-        productImage : [ ...preve.productImage, uploadImageCloudinary.url]
-      }
-    })
+        productImage: [...newProductImage],
+      };
+    });
+  };
+
+  {
+    /**upload product */
   }
 
-  const handleDeleteProductImage = async(index)=>{
-    console.log("image index",index)
-    
-    const newProductImage = [...data.productImage]
-    newProductImage.splice(index,1)
-
-    setData((preve)=>{
-      return{
-        ...preve,
-        productImage : [...newProductImage]
-      }
-    })
-    
-  }
 
   {/**upload product */}
   const handleSubmit = async(e) =>{
@@ -80,17 +98,28 @@ const UploadProduct = ({
       credentials : 'include',
       headers : {
         "content-type" : "application/json"
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const response = await fetch(SummaryApi.uploadProduct.url, {
+      method: SummaryApi.uploadProduct.method,
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+
       },
-      body : JSON.stringify(data)
-    })
+      body: JSON.stringify(data),
+    });
 
-    const responseData = await response.json()
+    const responseData = await response.json();
 
-    if(responseData.success){
-        toast.success(responseData?.message)
-        onClose()
-        fetchData()
+    if (responseData.success) {
+      toast.success(responseData?.message);
+      onClose();
+      fetchData();
     }
+
 
     if(responseData.error){
       toast.error(responseData?.message)
@@ -240,5 +269,12 @@ const UploadProduct = ({
     </div>
   )
 }
+    if (responseData.error) {
+      toast.error(responseData?.message);
+    }
+  };
+  // ...existing code...
+};
 
-export default UploadProduct
+
+export default UploadProduct;

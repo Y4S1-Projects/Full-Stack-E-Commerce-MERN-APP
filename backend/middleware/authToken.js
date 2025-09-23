@@ -1,41 +1,8 @@
-const jwt = require('jsonwebtoken')
+const { auth } = require('express-oauth2-jwt-bearer');
 
-async function authToken(req,res,next){
-    try{
-        const token = req.cookies?.token
+const checkJwt = auth({
+  audience: process.env.AUTH0_AUDIENCE, // e.g. https://mern-secure-api
+  issuerBaseURL: process.env.AUTH0_DOMAIN, // e.g. https://dev-xxxx.us.auth0.com
+});
 
-        console.log("token",token)
-        if(!token){
-            return res.status(200).json({
-                message : "Please Login...!",
-                error : true,
-                success : false
-            })
-        }
-
-        jwt.verify(token, process.env.TOKEN_SECRET_KEY, function(err, decoded) {
-            console.log(err)
-            console.log("decoded",decoded)
-            
-            if(err){
-                console.log("error auth", err)
-            }
-
-            req.userId = decoded?._id
-
-            next()
-        });
-
-
-    }catch(err){
-        res.status(400).json({
-            message : err.message || err,
-            data : [],
-            error : true,
-            success : false
-        })
-    }
-}
-
-
-module.exports = authToken
+module.exports = checkJwt;
