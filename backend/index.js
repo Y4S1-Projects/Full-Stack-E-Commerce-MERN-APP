@@ -40,6 +40,15 @@ app.use(
     frameguard: {
       action: 'deny',
     },
+    // Strict-Transport-Security (HSTS) header - only in production
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 63072000, 
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
   })
 );
 
