@@ -24,22 +24,28 @@ const CategoryProduct = () => {
 
   // Accept accessToken as optional param
   const fetchData = async (accessToken = null) => {
-    const headers = {
-      'content-type': 'application/json',
-    };
-    if (accessToken) {
-      headers['Authorization'] = `Bearer ${accessToken}`;
+    setLoading(true);
+    try {
+      const headers = {
+        'content-type': 'application/json',
+      };
+      if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+      }
+      const response = await fetch(SummaryApi.filterProduct.url, {
+        method: SummaryApi.filterProduct.method,
+        headers,
+        body: JSON.stringify({
+          category: filterCategoryList,
+        }),
+      });
+      const dataResponse = await response.json();
+      setData(dataResponse?.data || []);
+    } catch (err) {
+      setData([]);
+    } finally {
+      setLoading(false);
     }
-    const response = await fetch(SummaryApi.filterProduct.url, {
-      method: SummaryApi.filterProduct.method,
-      headers,
-      body: JSON.stringify({
-        category: filterCategoryList,
-      }),
-    });
-
-    const dataResponse = await response.json();
-    setData(dataResponse?.data || []);
   };
 
   const handleSelectCategory = (e) => {
@@ -54,7 +60,10 @@ const CategoryProduct = () => {
   };
 
   useEffect(() => {
-    fetchData();
+    // Only fetch if filterCategoryList is not empty, or if there are no categories in the URL (show all)
+    if (filterCategoryList.length > 0 || urlCategoryListinArray.length === 0) {
+      fetchData();
+    }
   }, [filterCategoryList]);
 
   useEffect(() => {
@@ -99,7 +108,7 @@ const CategoryProduct = () => {
   return (
     <div className="container p-4 mx-auto">
       {/***desktop version */}
-      <div className="hidden lg:grid grid-cols-[200px,1fr]">
+      <div className=" lg:grid grid-cols-[200px,1fr]">
         {/***left side */}
         <div className="bg-white p-2 min-h-[calc(100vh-120px)] overflow-y-scroll">
           {/**sort by */}

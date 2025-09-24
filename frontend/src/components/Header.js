@@ -96,13 +96,16 @@ const Header = () => {
             onChange={handleSearch}
             value={search}
           />
-          <div className="text-lg min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white">
+          <div className="text-xl min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white">
             <GrSearch />
           </div>
         </div>
 
         <div className="flex items-center gap-7">
-          <div className="relative flex justify-center">
+          <div
+            className="relative flex justify-center"
+            style={{ border: '2px solid red', background: 'rgba(255,0,0,0.05)' }}
+          >
             {user?._id && (
               <div
                 className="relative flex justify-center text-3xl cursor-pointer"
@@ -117,17 +120,18 @@ const Header = () => {
             )}
 
             {menuDisplay && (
-              <div className="absolute bottom-0 p-2 bg-white rounded shadow-lg top-11 h-fit">
+              <div className="absolute left-0 right-0 z-50 p-2 bg-white rounded shadow-lg top-14 h-fit min-w-[150px]">
                 <nav>
                   {user?.role === ROLE.ADMIN && (
                     <Link
                       to={'/admin-panel/all-products'}
-                      className="hidden p-2 whitespace-nowrap md:block hover:bg-slate-100"
+                      className="block p-2 whitespace-nowrap hover:bg-slate-100"
                       onClick={() => setMenuDisplay((preve) => !preve)}
                     >
                       Admin Panel
                     </Link>
                   )}
+                  {/* Add more submenu items here if needed */}
                 </nav>
               </div>
             )}
