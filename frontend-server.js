@@ -28,6 +28,14 @@ app.use(
     frameguard: {
       action: 'deny',
     },
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 63072000, 
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
   })
 );
 
@@ -36,10 +44,10 @@ app.use(express.static(path.join(__dirname, 'frontend/build')));
 
 // Handle React routing, return all requests to React app
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'frontend/build', 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Frontend server with security headers running on port ${PORT}`);
+  console.log(`Frontend server with security headers running on port ${PORT}`);
 });
