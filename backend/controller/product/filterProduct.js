@@ -1,17 +1,21 @@
 const productModel = require("../../models/productModel")
+const { sanitizeInput } = require('../../helpers/sanitize')
 
 const filterProductController = async(req,res)=>{
  try{
         const categoryList = req?.body?.category || []
 
-        const product = await productModel.find({
+        // Sanitize category list
+        const sanitizedCategoryList = categoryList.map(category => sanitizeInput(category))
+
+        const products = await productModel.find({
             category :  {
-                "$in" : categoryList
+                "$in" : sanitizedCategoryList
             }
         })
 
         res.json({
-            data : product,
+            data : products,
             message : "product",
             error : false,
             success : true
@@ -24,6 +28,5 @@ const filterProductController = async(req,res)=>{
     })
  }
 }
-
 
 module.exports = filterProductController

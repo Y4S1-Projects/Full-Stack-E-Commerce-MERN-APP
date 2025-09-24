@@ -1,31 +1,30 @@
+const uploadProductPermission = require("../../helpers/permission")
 const productModel = require("../../models/productModel")
+const { sanitizeObject } = require('../../helpers/sanitize')
 
-const searchProduct = async(req,res)=>{
+async function UploadProductController(req,res){
     try{
-        const query = req.query.q 
+        const sessionUserId = req.userId
 
-        const regex = new RegExp(query,'i','g')
+        if(!uploadProductPermission(sessionUserId)){
+            throw new Error("Permission denied")
+        }
 
-        const product = await productModel.find({
-            "$or" : [
-                {
-                    productName : regex
-                },
-                {
-                    category : regex
-                }
-            ]
-        })
+        // Sanitize all input data before saving
+        const sanitizedProductData = sanitizeObject(req.body)
+    
+        const uploadProduct = new productModel(sanitizedProductData)
+        const saveProduct = await uploadProduct.save()
 
-
-        res.json({
-            data  : product ,
-            message : "Search Product list",
+        res.status(201).json({
+            message : "Product upload successfully",
             error : false,
-            success : true
+            success : true,
+            data : saveProduct
         })
+
     }catch(err){
-        res.json({
+        res.status(400).json({
             message : err.message || err,
             error : true,
             success : false
@@ -33,4 +32,4 @@ const searchProduct = async(req,res)=>{
     }
 }
 
-module.exports = searchProduct
+module.exports = UploadProductController

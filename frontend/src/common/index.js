@@ -1,6 +1,10 @@
 // Use absolute URLs to backend since proxy isn't working properly
 // In production, set REACT_APP_API_BASE to your backend origin, e.g. https://api.example.com
-const backendDomin = process.env.REACT_APP_API_BASE || 'http://localhost:8080';
+const backendDomin = process.env.REACT_APP_API_BASE;
+
+if (!backendDomin) {
+  throw new Error('REACT_APP_API_BASE environment variable must be set');
+}
 
 const SummaryApi = {
   signUP: {
