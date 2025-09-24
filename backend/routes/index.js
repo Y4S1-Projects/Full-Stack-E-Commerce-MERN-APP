@@ -7,6 +7,7 @@ const userSignInController = require('../controller/user/userSignIn');
 const userDetailsController = require('../controller/user/userDetails');
 const auth0Jwt = require('../middleware/authToken');
 const checkAuthToken = require('../middleware/checkAuthToken');
+const unifiedJwt = require('../middleware/unifiedJwt');
 const attachUserId = require('../middleware/attachUserId');
 const userLogout = require('../controller/user/userLogout');
 const allUsers = require('../controller/user/allUsers');
@@ -32,6 +33,9 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Security headers test endpoint', status: 'success' });
 });
 
+// Mount /api/auth for authentication endpoints (including Google login)
+router.use('/auth', authRoutes);
+
 // Public endpoints
 router.post('/signup', userSignUpController);
 router.post('/signin', userSignInController);
@@ -39,15 +43,20 @@ router.get('/userLogout', userLogout);
 
 // Secure endpoints (require Auth token in cookie/session/header, then Auth0 JWT + attachUserId)
 router.get('/user-details', checkAuthToken, auth0Jwt, attachUserId, userDetailsController);
+router.get('/user-details', unifiedJwt, attachUserId, userDetailsController);
 
 //admin panel
 router.get('/all-user', checkAuthToken, auth0Jwt, attachUserId, allUsers);
+router.get('/all-user', unifiedJwt, attachUserId, allUsers);
 router.post('/update-user', checkAuthToken, auth0Jwt, attachUserId, updateUser);
+router.post('/update-user', unifiedJwt, attachUserId, updateUser);
 
 //product
 router.post('/upload-product', checkAuthToken, auth0Jwt, attachUserId, UploadProductController);
+router.post('/upload-product', unifiedJwt, attachUserId, UploadProductController);
 router.get('/get-product', getProductController);
 router.post('/update-product', checkAuthToken, auth0Jwt, attachUserId, updateProductController);
+router.post('/update-product', unifiedJwt, attachUserId, updateProductController);
 router.get('/get-categoryProduct', getCategoryProduct);
 router.post('/category-product', getCategoryWiseProduct);
 router.post('/product-details', getProductDetails);
@@ -56,10 +65,15 @@ router.post('/filter-product', filterProductController);
 
 //user add to cart
 router.post('/addtocart', checkAuthToken, auth0Jwt, attachUserId, addToCartController);
+router.post('/addtocart', unifiedJwt, attachUserId, addToCartController);
 router.get('/countAddToCartProduct', checkAuthToken, auth0Jwt, attachUserId, countAddToCartProduct);
+router.get('/countAddToCartProduct', unifiedJwt, attachUserId, countAddToCartProduct);
 router.get('/view-card-product', checkAuthToken, auth0Jwt, attachUserId, addToCartViewProduct);
+router.get('/view-card-product', unifiedJwt, attachUserId, addToCartViewProduct);
 router.post('/update-cart-product', checkAuthToken, auth0Jwt, attachUserId, updateAddToCartProduct);
+router.post('/update-cart-product', unifiedJwt, attachUserId, updateAddToCartProduct);
 router.post('/delete-cart-product', checkAuthToken, auth0Jwt, attachUserId, deleteAddToCartProduct);
+router.post('/delete-cart-product', unifiedJwt, attachUserId, deleteAddToCartProduct);
 
 router.use('/auth0', authRoutes);
 

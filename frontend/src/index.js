@@ -8,15 +8,17 @@ import router from './routes';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 
-import AuthProvider from './auth/AuthProvider';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <AuthProvider>
+  <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
     <Provider store={store}>
       <RouterProvider router={router} />
     </Provider>
-  </AuthProvider>
+  </GoogleOAuthProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

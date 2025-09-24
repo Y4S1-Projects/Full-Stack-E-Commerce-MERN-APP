@@ -1,3 +1,4 @@
+// (Google credential logic removed; only backend JWT is used for session/API)
 const SESSION_MAX_AGE = 86400000; // 24h in ms, should match backend
 
 export function setSessionExpiry() {

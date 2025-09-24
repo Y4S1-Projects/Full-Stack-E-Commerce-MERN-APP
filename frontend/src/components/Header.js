@@ -46,6 +46,26 @@ const Header = () => {
 
   // Accept accessToken as optional param
   const handleLogout = async (accessToken = null) => {
+    // Always clear session (JWT, Auth0, Google)
+    clearSession();
+    // Also clear JWT session for all login types
+    if (typeof window !== 'undefined') {
+      // Defensive: try both helpers if available
+      try {
+        const { clearJwtSession } = require('../helpers/jwtSession');
+        clearJwtSession();
+      } catch (e) {
+        if (window.localStorage) {
+          window.localStorage.removeItem('jwt_token');
+          window.localStorage.removeItem('jwt_expiry');
+        }
+      }
+    }
+    dispatch(setUserDetails(null));
+
+    // Google credential logic removed; only backend JWT is used for session/API
+
+    // Otherwise, call backend logout (for Auth0/JWT)
     const headers = {};
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
@@ -60,7 +80,6 @@ const Header = () => {
 
     if (data.success) {
       toast.success(data.message);
-      dispatch(setUserDetails(null));
       navigate('/');
     }
 

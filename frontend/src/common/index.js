@@ -3,6 +3,10 @@
 const backendDomin = process.env.REACT_APP_API_BASE || 'http://localhost:8080';
 
 const SummaryApi = {
+  googleLogin: {
+    url: `${backendDomin}/api/auth/google`,
+    method: 'post',
+  },
   signUP: {
     url: `${backendDomin}/api/signup`,
     method: 'post',

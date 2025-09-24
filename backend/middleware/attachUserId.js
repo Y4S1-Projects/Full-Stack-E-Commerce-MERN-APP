@@ -4,9 +4,18 @@ const userModel = require('../models/userModel');
 // Assumes Auth0 JWT middleware has already validated and set req.auth
 module.exports = async function attachUserId(req, res, next) {
   try {
-    const auth0Id = req.auth?.payload?.sub;
-    if (!auth0Id) return res.status(401).json({ error: true, message: 'No Auth0 user ID in token', success: false });
-    const user = await userModel.findOne({ auth0Id });
+    // Support both Auth0 and Google JWTs
+    let user = null;
+    let payload = req.jwtPayload || (req.auth && req.auth.payload);
+    if (!payload) return res.status(401).json({ error: true, message: 'No JWT payload found', success: false });
+
+    if (payload.sub) {
+      // Auth0 login
+      user = await userModel.findOne({ auth0Id: payload.sub });
+    } else if (payload.email) {
+      // Google login
+      user = await userModel.findOne({ email: payload.email });
+    }
     if (!user) return res.status(401).json({ error: true, message: 'User not found in DB', success: false });
     req.userId = user._id;
     req.user = user; // Optionally attach full user

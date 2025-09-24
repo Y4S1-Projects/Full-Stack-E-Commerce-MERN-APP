@@ -1,3 +1,5 @@
+import { GoogleLogin } from '@react-oauth/google';
+
 import React, { useState } from 'react';
 import loginIcons from '../assest/signin.gif';
 import { FaEye } from 'react-icons/fa';
@@ -18,6 +20,40 @@ const SignUp = () => {
     profilePic: '',
   });
   const navigate = useNavigate();
+
+  // Google signup success handler
+  const handleGoogleSuccess = async (credentialResponse) => {
+    if (credentialResponse.credential) {
+      try {
+        // Send credential to backend for verification/session
+        const res = await fetch(SummaryApi.googleLogin.url, {
+          method: SummaryApi.googleLogin.method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: credentialResponse.credential }),
+        });
+        const data = await res.json();
+        if (data.success && data.data) {
+          // Store only backend JWT for session persistence
+          if (typeof window !== 'undefined') {
+            const { setJwtSession } = require('../helpers/jwtSession');
+            setJwtSession(data.data);
+          }
+          toast.success('Google signup successful!');
+          navigate('/');
+        } else {
+          toast.error(data.error || 'Google signup failed');
+        }
+      } catch (err) {
+        toast.error('Google signup failed: ' + err.message);
+      }
+    } else {
+      toast.error('Google signup failed: No credential');
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google signup failed');
+  };
 
   const handleOnChange = (e) => {
     const { name, value } = e.target;
@@ -94,6 +130,10 @@ const SignUp = () => {
           </div>
 
           <form className="flex flex-col gap-2 pt-6" onSubmit={handleSubmit}>
+            <div className="flex flex-col items-center w-full my-2">
+              <span className="mb-2 font-medium text-gray-500">Or sign up with Google</span>
+              <GoogleLogin onSuccess={handleGoogleSuccess} onError={handleGoogleError} width="100%" useOneTap />
+            </div>
             <div className="grid">
               <label>Name : </label>
               <div className="p-2 bg-slate-100">
@@ -167,7 +207,7 @@ const SignUp = () => {
 
           <p className="my-5">
             Already have account ?{' '}
-            <Link to={'/login'} className="text-red-600  hover:text-red-700 hover:underline">
+            <Link to={'/login'} className="text-red-600 hover:text-red-700 hover:underline">
               Login
             </Link>
           </p>

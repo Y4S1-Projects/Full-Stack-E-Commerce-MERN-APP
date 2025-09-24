@@ -7,13 +7,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setSessionExpiry, isSessionExpired, clearSession } from './helpers/session';
+import { getBestAccessToken } from './helpers/getBestAccessToken';
 import { getJwtSession, isJwtSessionExpired, clearJwtSession } from './helpers/jwtSession';
 import { useAuth0 } from '@auth0/auth0-react';
 import SummaryApi from './common';
 import Context from './context';
 import { useDispatch } from 'react-redux';
 import { setUserDetails } from './store/userSlice';
-
 function App() {
   const { getAccessTokenSilently, isAuthenticated, logout } = useAuth0();
   const dispatch = useDispatch();
@@ -21,7 +21,13 @@ function App() {
   const navigate = useNavigate();
 
   // Always require accessToken for protected endpoints
-  const fetchUserDetails = async (accessToken) => {
+  // Accepts optional explicit token, otherwise uses best available
+  const fetchUserDetails = async (explicitToken = null) => {
+    const jwt = getJwtSession && getJwtSession();
+    let accessToken = explicitToken;
+    if (!accessToken) {
+      accessToken = getBestAccessToken(null, jwt);
+    }
     if (!accessToken) return;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
@@ -44,7 +50,12 @@ function App() {
     }
   };
 
-  const fetchUserAddToCart = async (accessToken) => {
+  const fetchUserAddToCart = async (explicitToken = null) => {
+    const jwt = getJwtSession && getJwtSession();
+    let accessToken = explicitToken;
+    if (!accessToken) {
+      accessToken = getBestAccessToken(null, jwt);
+    }
     if (!accessToken) return;
     const headers = {
       Authorization: `Bearer ${accessToken}`,
@@ -76,6 +87,8 @@ function App() {
       navigate('/');
     }
 
+    // Google credential session logic removed; only backend JWT is used for session/API
+
     // Browser JWT session logic
     const jwt = getJwtSession();
     if (jwt && !isJwtSessionExpired()) {
@@ -102,23 +115,20 @@ function App() {
     // eslint-disable-next-line
   }, [isAuthenticated, getAccessTokenSilently, logout, navigate]);
   return (
-    <>
-      <Context.Provider
-        value={{
-          fetchUserDetails, // user detail fetch
-          cartProductCount, // current user add to cart product count,
-          fetchUserAddToCart,
-        }}
-      >
-        <ToastContainer position="top-center" />
-
-        <Header />
-        <main className="min-h-[calc(100vh-120px)] pt-16">
-          <Outlet />
-        </main>
-        <Footer />
-      </Context.Provider>
-    </>
+    <Context.Provider
+      value={{
+        fetchUserDetails, // user detail fetch
+        cartProductCount, // current user add to cart product count,
+        fetchUserAddToCart,
+      }}
+    >
+      <ToastContainer position="top-center" />
+      <Header />
+      <main className="min-h-[calc(100vh-120px)] pt-16">
+        <Outlet />
+      </main>
+      <Footer />
+    </Context.Provider>
   );
 }
 

@@ -1,12 +1,12 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-module.exports = function(app) {
+module.exports = function (app) {
   // Add security headers middleware
   app.use((req, res, next) => {
     // Content Security Policy - Development mode considerations
     const isDevelopment = process.env.NODE_ENV !== 'production';
-    
-    let cspPolicy = 
+
+    let cspPolicy =
       "default-src 'self'; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: http://res.cloudinary.com https://res.cloudinary.com; " +
@@ -17,27 +17,29 @@ module.exports = function(app) {
       "manifest-src 'self'; " +
       "worker-src 'self' blob:; " +
       "child-src 'self' blob:;";
-    
+
     // Handle styles and scripts based on environment
     if (isDevelopment) {
-      // Development: Allow unsafe-inline for React hot reloading and inline styles
+      // Development: Allow Google scripts and unsafe-eval for webpack
       cspPolicy += "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; ";
-      cspPolicy += "script-src 'self' 'unsafe-eval';"; // webpack needs unsafe-eval
+      cspPolicy +=
+        "script-src 'self' 'unsafe-eval' https://accounts.google.com https://accounts.google.com/gsi/client https://apis.google.com https://*.gstatic.com;";
     } else {
-      // Production: Secure CSP
+      // Production: Allow Google scripts, no unsafe-eval
       cspPolicy += "style-src 'self' https://fonts.googleapis.com; ";
-      cspPolicy += "script-src 'self';";
+      cspPolicy +=
+        "script-src 'self' https://accounts.google.com https://accounts.google.com/gsi/client https://apis.google.com https://*.gstatic.com;";
     }
-    
+
     res.setHeader('Content-Security-Policy', cspPolicy);
-    
+
     // X-Frame-Options for clickjacking protection
     res.setHeader('X-Frame-Options', 'DENY');
-    
+
     // Additional security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    
+
     next();
   });
 
