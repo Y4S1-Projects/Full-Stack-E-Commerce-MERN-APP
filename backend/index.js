@@ -51,7 +51,7 @@ app.use(
     hsts:
       process.env.NODE_ENV === 'production'
         ? {
-            maxAge: 63072000, 
+            maxAge: 63072000,
             includeSubDomains: true,
             preload: true,
           }
@@ -94,9 +94,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Ensure Express responds to CORS preflight for all routes
-app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
