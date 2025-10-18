@@ -4,7 +4,9 @@ import SummaryApi from '../common';
 import Context from '../context';
 import displayINRCurrency from '../helpers/displayCurrency';
 import { MdDelete } from 'react-icons/md';
-import { getJwtSession, isJwtSessionExpired } from '../helpers/jwtSession';
+import { isJwtSessionExpired } from '../helpers/jwtSession';
+import { authenticatedGet, authenticatedPost, getAccessToken } from '../helpers/apiHelper';
+import DOMPurify from 'dompurify';
 
 const Cart = () => {
   const [data, setData] = useState([]);
@@ -12,35 +14,31 @@ const Cart = () => {
   const context = useContext(Context);
   const loadingCart = new Array(4).fill(null);
 
-  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
+  const auth0 = useAuth0();
+  const { isAuthenticated, loginWithRedirect } = auth0;
+
+  // Sanitize text to prevent XSS
+  const sanitizeText = (text) => {
+    return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+  };
 
   // Support both Auth0 and legacy JWT session
   const fetchData = async () => {
-    let accessToken = null;
-    if (isAuthenticated) {
-      accessToken = await getAccessTokenSilently();
-    } else {
-      const jwt = getJwtSession();
-      if (!jwt || isJwtSessionExpired()) {
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken) {
         setData([]);
         return;
       }
-      accessToken = jwt;
-    }
-    const headers = {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    };
-    const response = await fetch(SummaryApi.addToCartProductView.url, {
-      method: SummaryApi.addToCartProductView.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-    });
-    const responseData = await response.json();
-    if (responseData.success) {
-      setData(responseData.data);
+
+      const responseData = await authenticatedGet(SummaryApi.addToCartProductView.url, auth0);
+
+      if (responseData.success) {
+        setData(responseData.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cart data:', error);
+      setData([]);
     }
   };
 
@@ -51,100 +49,67 @@ const Cart = () => {
   }, [isAuthenticated]);
 
   const increaseQty = async (id, qty) => {
-    let accessToken = null;
-    if (isAuthenticated) {
-      accessToken = await getAccessTokenSilently();
-    } else {
-      const jwt = getJwtSession();
-      if (!jwt || isJwtSessionExpired()) {
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
         loginWithRedirect();
         return;
       }
-      accessToken = jwt;
-    }
-    const headers = {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    };
-    const response = await fetch(SummaryApi.updateCartProduct.url, {
-      method: SummaryApi.updateCartProduct.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
+
+      const responseData = await authenticatedPost(SummaryApi.updateCartProduct.url, auth0, {
         _id: id,
         quantity: qty + 1,
-      }),
-    });
-    const responseData = await response.json();
-    if (responseData.success) {
-      fetchData();
+      });
+
+      if (responseData.success) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error increasing quantity:', error);
     }
   };
 
-  const decraseQty = async (id, qty) => {
+  const decreaseQty = async (id, qty) => {
     if (qty < 2) return;
-    let accessToken = null;
-    if (isAuthenticated) {
-      accessToken = await getAccessTokenSilently();
-    } else {
-      const jwt = getJwtSession();
-      if (!jwt || isJwtSessionExpired()) {
+
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
         loginWithRedirect();
         return;
       }
-      accessToken = jwt;
-    }
-    const headers = {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    };
-    const response = await fetch(SummaryApi.updateCartProduct.url, {
-      method: SummaryApi.updateCartProduct.method,
-      credentials: 'include',
-      headers,
-      body: JSON.stringify({
+
+      const responseData = await authenticatedPost(SummaryApi.updateCartProduct.url, auth0, {
         _id: id,
         quantity: qty - 1,
-      }),
-    });
-    const responseData = await response.json();
-    if (responseData.success) {
-      fetchData();
+      });
+
+      if (responseData.success) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error decreasing quantity:', error);
     }
   };
 
   const deleteCartProduct = async (id) => {
-    let accessToken = null;
-    if (isAuthenticated) {
-      accessToken = await getAccessTokenSilently();
-    } else {
-      const jwt = getJwtSession();
-      if (!jwt || isJwtSessionExpired()) {
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
         loginWithRedirect();
         return;
       }
-      accessToken = jwt;
-    }
-    const headers = {
-      'content-type': 'application/json',
-      Authorization: `Bearer ${accessToken}`,
-    };
-    const response = await fetch(SummaryApi.deleteCartProduct.url, {
-      method: SummaryApi.deleteCartProduct.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
+
+      const responseData = await authenticatedPost(SummaryApi.deleteCartProduct.url, auth0, {
         _id: id,
-      }),
-    });
-    const responseData = await response.json();
-    if (responseData.success) {
-      fetchData();
-      context.fetchUserAddToCart(accessToken);
+      });
+
+      if (responseData.success) {
+        fetchData();
+        context.fetchUserAddToCart(accessToken);
+      }
+    } catch (error) {
+      console.error('Error deleting cart product:', error);
     }
   };
 

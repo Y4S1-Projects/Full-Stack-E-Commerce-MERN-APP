@@ -87,105 +87,6 @@ const Header = () => {
       navigate('/');
     }
 
-  }
-
-  const handleSearch = (e)=>{
-    const { value } = e.target
-    const sanitizedValue = sanitizeInput(value) // Sanitize search input
-    setSearch(sanitizedValue)
-
-    if(sanitizedValue){
-      navigate(`/search?q=${encodeURIComponent(sanitizedValue)}`) // URL encode for safety
-    }else{
-      navigate("/search")
-    }
-  }
-
-  return (
-    <header className='fixed z-40 w-full h-16 bg-white shadow-md'>
-      <div className='container flex items-center justify-between h-full px-4 mx-auto '>
-            <div className=''>
-                <Link to={"/"}>
-                    <Logo w={90} h={50}/>
-                </Link>
-            </div>
-
-            <div className='items-center justify-between hidden w-full max-w-sm pl-2 border rounded-full lg:flex focus-within:shadow'>
-                <input 
-                  type='text' 
-                  placeholder='search product here...' 
-                  className='w-full outline-none' 
-                  onChange={handleSearch} 
-                  value={search}
-                />
-                <div className='text-lg min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white'>
-                  <GrSearch />
-                </div>
-            </div>
-
-            <div className='flex items-center gap-7'>
-                
-                <div className='relative flex justify-center'>
-
-                  {
-                    user?._id && (
-                      <div className='relative flex justify-center text-3xl cursor-pointer' onClick={()=>setMenuDisplay(preve => !preve)}>
-                        {
-                          user?.profilePic ? (
-                            <img 
-                              src={user?.profilePic} 
-                              className='w-10 h-10 rounded-full' 
-                              alt={sanitizeInput(user?.name) || 'User profile'} // Sanitize alt attribute
-                            />
-                          ) : (
-                            <FaRegCircleUser/>
-                          )
-                        }
-                      </div>
-                    )
-                  }
-                  
-                  {
-                    menuDisplay && (
-                      <div className='absolute bottom-0 p-2 bg-white rounded shadow-lg top-11 h-fit' >
-                        <nav>
-                          {
-                            user?.role === ROLE.ADMIN && (
-                              <Link to={"/admin-panel/all-products"} className='hidden p-2 whitespace-nowrap md:block hover:bg-slate-100' onClick={()=>setMenuDisplay(preve => !preve)}>Admin Panel</Link>
-                            )
-                          }
-                        </nav>
-                      </div>
-                    )
-                  }
-                </div>
-
-                {
-                   user?._id && (
-                    <Link to={"/cart"} className='relative text-2xl'>
-                        <span><FaShoppingCart/></span>
-    
-                        <div className='absolute flex items-center justify-center w-5 h-5 p-1 text-white bg-red-600 rounded-full -top-2 -right-3'>
-                            <p className='text-sm'>{context?.cartProductCount}</p>
-                        </div>
-                    </Link>
-                    )
-                }
-
-                <div>
-                  {
-                    user?._id  ? (
-                      <button onClick={handleLogout} className='px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700'>Logout</button>
-                    )
-                    : (
-                    <Link to={"/login"} className='px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700'>Login</Link>
-                    )
-                  }
-                </div>
-
-            </div>
-
-
     if (data.error) {
       toast.error(data.message);
     }
@@ -220,16 +121,13 @@ const Header = () => {
             onChange={handleSearch}
             value={search}
           />
-          <div className="text-xl min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white">
+          <div className="text-lg min-w-[50px] h-8 bg-red-600 flex items-center justify-center rounded-r-full text-white">
             <GrSearch />
           </div>
         </div>
 
         <div className="flex items-center gap-7">
-          <div
-            className="relative flex justify-center"
-            style={{ border: '2px solid red', background: 'rgba(255,0,0,0.05)' }}
-          >
+          <div className="relative flex justify-center">
             {user?._id && (
               <div
                 className="relative flex justify-center text-3xl cursor-pointer"
@@ -254,12 +152,11 @@ const Header = () => {
                     <Link
                       to={'/admin-panel/all-products'}
                       className="block p-2 whitespace-nowrap hover:bg-slate-100"
-                      onClick={() => setMenuDisplay((preve) => !preve)}
+                      onClick={() => setMenuDisplay((prev) => !prev)}
                     >
                       Admin Panel
                     </Link>
                   )}
-                  {/* Add more submenu items here if needed */}
                 </nav>
               </div>
             )}
@@ -279,17 +176,11 @@ const Header = () => {
 
           <div>
             {user?._id ? (
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700"
-              >
+              <button onClick={handleLogout} className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700">
                 Logout
               </button>
             ) : (
-              <Link
-                to={'/login'}
-                className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700"
-              >
+              <Link to={'/login'} className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700">
                 Login
               </Link>
             )}

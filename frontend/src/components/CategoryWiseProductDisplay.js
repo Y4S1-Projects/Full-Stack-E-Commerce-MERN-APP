@@ -1,18 +1,23 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import fetchCategoryWiseProduct from '../helpers/fetchCategoryWiseProduct';
 import displayINRCurrency from '../helpers/displayCurrency';
-import { FaAngleLeft, FaAngleRight } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import addToCart from '../helpers/addToCart';
 import Context from '../context';
 import scrollTop from '../helpers/scrollTop';
+import DOMPurify from 'dompurify';
 
-const CategroyWiseProductDisplay = ({ category, heading }) => {
+const CategoryWiseProductDisplay = ({ category, heading }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const loadingList = new Array(13).fill(null);
 
   const { fetchUserAddToCart } = useContext(Context);
+
+  // Sanitize text to prevent XSS
+  const sanitizeText = (text) => {
+    return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
+  };
 
   const handleAddToCart = async (e, id) => {
     await addToCart(e, id);
@@ -31,6 +36,7 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
 
   useEffect(() => {
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -41,7 +47,10 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
         {loading
           ? loadingList.map((product, index) => {
               return (
-                <div className="w-full min-w-[280px]  md:min-w-[320px] max-w-[280px] md:max-w-[320px]  bg-white rounded-sm shadow ">
+                <div
+                  key={index}
+                  className="w-full min-w-[280px]  md:min-w-[320px] max-w-[280px] md:max-w-[320px]  bg-white rounded-sm shadow "
+                >
                   <div className="bg-slate-200 h-48 p-4 min-w-[280px] md:min-w-[145px] flex justify-center items-center animate-pulse"></div>
                   <div className="grid gap-3 p-4">
                     <h2 className="p-1 py-2 text-base font-medium text-black rounded-full md:text-lg text-ellipsis line-clamp-1 animate-pulse bg-slate-200"></h2>
@@ -58,6 +67,7 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
           : data.map((product, index) => {
               return (
                 <Link
+                  key={product?._id}
                   to={'/product/' + product?._id}
                   className="w-full min-w-[280px]  md:min-w-[320px] max-w-[280px] md:max-w-[320px]  bg-white rounded-sm shadow "
                   onClick={scrollTop}
@@ -65,14 +75,15 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
                   <div className="bg-slate-200 h-48 p-4 min-w-[280px] md:min-w-[145px] flex justify-center items-center">
                     <img
                       src={product.productImage[0]}
+                      alt={sanitizeText(product?.productName)}
                       className="object-scale-down h-full transition-all hover:scale-110 mix-blend-multiply"
                     />
                   </div>
                   <div className="grid gap-3 p-4">
                     <h2 className="text-base font-medium text-black md:text-lg text-ellipsis line-clamp-1">
-                      {product?.productName}
+                      {sanitizeText(product?.productName)}
                     </h2>
-                    <p className="capitalize text-slate-500">{product?.category}</p>
+                    <p className="capitalize text-slate-500">{sanitizeText(product?.category)}</p>
                     <div className="flex gap-3">
                       <p className="font-medium text-red-600">{displayINRCurrency(product?.sellingPrice)}</p>
                       <p className="line-through text-slate-500">{displayINRCurrency(product?.price)}</p>
@@ -88,7 +99,6 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
               );
             })}
       </div>
-
     </div>
   );
 };
