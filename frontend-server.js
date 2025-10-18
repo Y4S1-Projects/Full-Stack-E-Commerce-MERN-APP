@@ -4,7 +4,9 @@ const path = require('path');
 
 const app = express();
 
-// Security Headers for Frontend - Balanced approach for React
+const API_URL = process.env.REACT_APP_API_BASE || process.env.REACT_APP_API_URL;
+
+// Security Headers for Frontend - Using environment variables
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -12,9 +14,9 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        scriptSrc: ["'self'", 'https://accounts.google.com', 'https://apis.google.com', "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
         imgSrc: ["'self'", 'data:', 'blob:', 'http://res.cloudinary.com', 'https://res.cloudinary.com'],
-        connectSrc: ["'self'", 'http://localhost:8080', 'https://api.cloudinary.com'],
+        connectSrc: ["'self'", API_URL, 'https://api.cloudinary.com'].filter(Boolean),
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
@@ -26,6 +28,14 @@ app.use(
     frameguard: {
       action: 'deny',
     },
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 63072000, 
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
   })
 );
 

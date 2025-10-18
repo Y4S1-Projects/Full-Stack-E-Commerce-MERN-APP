@@ -1,12 +1,11 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import fetchCategoryWiseProduct from '../helpers/fetchCategoryWiseProduct';
 import displayINRCurrency from '../helpers/displayCurrency';
+import { FaAngleLeft, FaAngleRight } from 'react-icons/fa6';
 import { Link } from 'react-router-dom';
 import addToCart from '../helpers/addToCart';
 import Context from '../context';
 import scrollTop from '../helpers/scrollTop';
-import { useAuth0 } from '@auth0/auth0-react';
-import { getJwtSession, isJwtSessionExpired } from '../helpers/jwtSession';
 
 const CategroyWiseProductDisplay = ({ category, heading }) => {
   const [data, setData] = useState([]);
@@ -14,23 +13,10 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
   const loadingList = new Array(13).fill(null);
 
   const { fetchUserAddToCart } = useContext(Context);
-  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
 
   const handleAddToCart = async (e, id) => {
-    let accessToken = null;
-    if (isAuthenticated) {
-      accessToken = await getAccessTokenSilently();
-    } else {
-      // fallback to JWT session
-      const jwt = getJwtSession();
-      if (!jwt || isJwtSessionExpired()) {
-        loginWithRedirect();
-        return;
-      }
-      accessToken = jwt;
-    }
-    await addToCart(e, id, accessToken);
-    fetchUserAddToCart(accessToken);
+    await addToCart(e, id);
+    fetchUserAddToCart();
   };
 
   // Accept accessToken as optional param
@@ -39,26 +25,13 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
     const categoryProduct = await fetchCategoryWiseProduct(category, accessToken);
     setLoading(false);
 
+    console.log('horizontal data', categoryProduct.data);
     setData(categoryProduct.data);
   };
 
   useEffect(() => {
-    // Try to get token for protected endpoints
-    const getTokenAndFetch = async () => {
-      let accessToken = null;
-      if (isAuthenticated) {
-        accessToken = await getAccessTokenSilently();
-      } else {
-        const jwt = getJwtSession();
-        if (jwt && !isJwtSessionExpired()) {
-          accessToken = jwt;
-        }
-      }
-      await fetchData(accessToken);
-    };
-    getTokenAndFetch();
-    // eslint-disable-next-line
-  }, [isAuthenticated]);
+    fetchData();
+  }, []);
 
   return (
     <div className="container relative px-4 mx-auto my-6">
@@ -115,8 +88,9 @@ const CategroyWiseProductDisplay = ({ category, heading }) => {
               );
             })}
       </div>
+
     </div>
   );
 };
 
-export default CategroyWiseProductDisplay;
+export default CategoryWiseProductDisplay;

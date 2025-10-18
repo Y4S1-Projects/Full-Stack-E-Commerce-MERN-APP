@@ -34,7 +34,9 @@ const Cart = () => {
     const response = await fetch(SummaryApi.addToCartProductView.url, {
       method: SummaryApi.addToCartProductView.method,
       credentials: 'include',
-      headers,
+      headers: {
+        'content-type': 'application/json',
+      },
     });
     const responseData = await response.json();
     if (responseData.success) {
@@ -67,7 +69,9 @@ const Cart = () => {
     const response = await fetch(SummaryApi.updateCartProduct.url, {
       method: SummaryApi.updateCartProduct.method,
       credentials: 'include',
-      headers,
+      headers: {
+        'content-type': 'application/json',
+      },
       body: JSON.stringify({
         _id: id,
         quantity: qty + 1,
@@ -130,7 +134,9 @@ const Cart = () => {
     const response = await fetch(SummaryApi.deleteCartProduct.url, {
       method: SummaryApi.deleteCartProduct.method,
       credentials: 'include',
-      headers,
+      headers: {
+        'content-type': 'application/json',
+      },
       body: JSON.stringify({
         _id: id,
       }),
@@ -151,7 +157,7 @@ const Cart = () => {
       </div>
 
       <div className="flex flex-col gap-10 p-4 lg:flex-row lg:justify-between">
-        {/***view product */}
+        {/* view product */}
         <div className="w-full max-w-3xl">
           {loading
             ? loadingCart?.map((el, index) => {
@@ -172,10 +178,11 @@ const Cart = () => {
                       <img
                         src={product?.productId?.productImage[0]}
                         className="object-scale-down w-full h-full mix-blend-multiply"
+                        alt={sanitizeText(product?.productId?.productName)}
                       />
                     </div>
                     <div className="relative px-4 py-2">
-                      {/**delete product */}
+                      {/* delete product */}
                       <div
                         className="absolute right-0 p-2 text-red-600 rounded-full cursor-pointer hover:bg-red-600 hover:text-white"
                         onClick={() => deleteCartProduct(product?._id)}
@@ -184,9 +191,9 @@ const Cart = () => {
                       </div>
 
                       <h2 className="text-lg lg:text-xl text-ellipsis line-clamp-1">
-                        {product?.productId?.productName}
+                        {sanitizeText(product?.productId?.productName)}
                       </h2>
-                      <p className="capitalize text-slate-500">{product?.productId.category}</p>
+                      <p className="capitalize text-slate-500">{sanitizeText(product?.productId?.category)}</p>
                       <div className="flex items-center justify-between">
                         <p className="text-lg font-medium text-red-600">
                           {displayINRCurrency(product?.productId?.sellingPrice)}
@@ -198,7 +205,7 @@ const Cart = () => {
                       <div className="flex items-center gap-3 mt-1">
                         <button
                           className="flex items-center justify-center w-6 h-6 text-red-600 border border-red-600 rounded hover:bg-red-600 hover:text-white "
-                          onClick={() => decraseQty(product?._id, product?.quantity)}
+                          onClick={() => decreaseQty(product?._id, product?.quantity)}
                         >
                           -
                         </button>

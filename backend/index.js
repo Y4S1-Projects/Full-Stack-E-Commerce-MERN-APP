@@ -47,6 +47,15 @@ app.use(
     frameguard: {
       action: 'deny',
     },
+    // Strict-Transport-Security (HSTS) header - only in production
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 63072000, 
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
   })
 );
 
@@ -67,7 +76,12 @@ const corsOptions = {
       allowedOrigins.includes(origin) ||
       devNetworkOriginRegex.test(origin) ||
       // allow any :3000 origin in non-production (useful for dev tools/proxies)
-      (process.env.NODE_ENV !== 'production' && /^http:\/\/[^\s:]+:3000$/.test(origin));
+      (process.env.NODE_ENV !== 'production' && /^http:\/\/[^\s:]+:3000$/.test(origin)) ||
+      // Allow localhost variations
+      origin === 'http://localhost:3000' ||
+      origin === 'http://127.0.0.1:3000' ||
+      // In development, be more permissive with localhost origins
+      (process.env.NODE_ENV !== 'production' && origin && origin.startsWith('http://localhost:'));
 
     if (isWhitelisted) {
       return callback(null, true);
