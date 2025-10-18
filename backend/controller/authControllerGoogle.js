@@ -33,6 +33,9 @@ exports.googleLogin = async (req, res) => {
     const token = jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
       expiresIn: '24h',
     });
+    // Set cookies so subsequent API calls can use cookies
+    const { setAuthCookies } = require('../utils/authCookie');
+    setAuthCookies(res, token);
 
     res.json({ success: true, data: token });
   } catch (err) {

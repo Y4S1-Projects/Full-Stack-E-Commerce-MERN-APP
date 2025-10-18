@@ -33,11 +33,14 @@ export const getAccessToken = async (auth0) => {
  * @returns {Object} - Headers object
  */
 export const createAuthHeaders = (accessToken, additionalHeaders = {}) => {
-  return {
+  const base = {
     'content-type': 'application/json',
-    Authorization: `Bearer ${accessToken}`,
     ...additionalHeaders,
   };
+  if (accessToken) {
+    base.Authorization = `Bearer ${accessToken}`;
+  }
+  return base;
 };
 
 /**
@@ -50,10 +53,6 @@ export const createAuthHeaders = (accessToken, additionalHeaders = {}) => {
  */
 export const authenticatedFetch = async (url, method, auth0, options = {}) => {
   const accessToken = await getAccessToken(auth0);
-
-  if (!accessToken) {
-    throw new Error('No valid access token available');
-  }
 
   const { body, headers: customHeaders = {}, ...restOptions } = options;
 

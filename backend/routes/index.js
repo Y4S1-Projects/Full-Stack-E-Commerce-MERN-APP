@@ -41,38 +41,30 @@ router.post('/signup', userSignUpController);
 router.post('/signin', userSignInController);
 router.get('/userLogout', userLogout);
 
-// Secure endpoints (require Auth token in cookie/session/header, then Auth0 JWT + attachUserId)
-router.get('/user-details', checkAuthToken, auth0Jwt, attachUserId, userDetailsController);
+// Secure endpoints (support Auth0 and Google JWT via unified middleware)
 router.get('/user-details', unifiedJwt, attachUserId, userDetailsController);
 
-//admin panel
-router.get('/all-user', checkAuthToken, auth0Jwt, attachUserId, allUsers);
+// Admin panel
 router.get('/all-user', unifiedJwt, attachUserId, allUsers);
-router.post('/update-user', checkAuthToken, auth0Jwt, attachUserId, updateUser);
 router.post('/update-user', unifiedJwt, attachUserId, updateUser);
 
-//product
-router.post('/upload-product', checkAuthToken, auth0Jwt, attachUserId, UploadProductController);
+// product
 router.post('/upload-product', unifiedJwt, attachUserId, UploadProductController);
 router.get('/get-product', getProductController);
-router.post('/update-product', checkAuthToken, auth0Jwt, attachUserId, updateProductController);
 router.post('/update-product', unifiedJwt, attachUserId, updateProductController);
 router.get('/get-categoryProduct', getCategoryProduct);
+// Accept both POST (body) and GET (query) for category filtering; both public
 router.post('/category-product', getCategoryWiseProduct);
+router.get('/category-product', getCategoryWiseProduct);
 router.post('/product-details', getProductDetails);
 router.get('/search', searchProduct);
 router.post('/filter-product', filterProductController);
 
-//user add to cart
-router.post('/addtocart', checkAuthToken, auth0Jwt, attachUserId, addToCartController);
+// user add to cart
 router.post('/addtocart', unifiedJwt, attachUserId, addToCartController);
-router.get('/countAddToCartProduct', checkAuthToken, auth0Jwt, attachUserId, countAddToCartProduct);
 router.get('/countAddToCartProduct', unifiedJwt, attachUserId, countAddToCartProduct);
-router.get('/view-card-product', checkAuthToken, auth0Jwt, attachUserId, addToCartViewProduct);
 router.get('/view-card-product', unifiedJwt, attachUserId, addToCartViewProduct);
-router.post('/update-cart-product', checkAuthToken, auth0Jwt, attachUserId, updateAddToCartProduct);
 router.post('/update-cart-product', unifiedJwt, attachUserId, updateAddToCartProduct);
-router.post('/delete-cart-product', checkAuthToken, auth0Jwt, attachUserId, deleteAddToCartProduct);
 router.post('/delete-cart-product', unifiedJwt, attachUserId, deleteAddToCartProduct);
 
 router.use('/auth0', authRoutes);

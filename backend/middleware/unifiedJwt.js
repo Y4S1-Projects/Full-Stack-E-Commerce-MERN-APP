@@ -26,6 +26,10 @@ module.exports = async function unifiedJwt(req, res, next) {
   if (!token && req.cookies && req.cookies.auth_token) {
     token = req.cookies.auth_token;
   }
+  // Also support cookie named 'token' (used in some Auth0 flows)
+  if (!token && req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
   if (!token) {
     return res.status(401).json({ error: true, message: 'No auth token found', success: false });
   }

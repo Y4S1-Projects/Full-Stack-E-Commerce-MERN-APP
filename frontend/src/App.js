@@ -14,6 +14,7 @@ import SummaryApi from './common';
 import Context from './context';
 import { useDispatch } from 'react-redux';
 import { setUserDetails } from './store/userSlice';
+
 function App() {
   const { getAccessTokenSilently, isAuthenticated, logout } = useAuth0();
   const dispatch = useDispatch();
@@ -28,10 +29,8 @@ function App() {
     if (!accessToken) {
       accessToken = getBestAccessToken(null, jwt);
     }
-    if (!accessToken) return;
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-    };
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     try {
       const dataResponse = await fetch(SummaryApi.current_user.url, {
         method: SummaryApi.current_user.method,
@@ -56,10 +55,8 @@ function App() {
     if (!accessToken) {
       accessToken = getBestAccessToken(null, jwt);
     }
-    if (!accessToken) return;
-    const headers = {
-      Authorization: `Bearer ${accessToken}`,
-    };
+    const headers = {};
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
     try {
       const dataResponse = await fetch(SummaryApi.addToCartProductCount.url, {
         method: SummaryApi.addToCartProductCount.method,
@@ -82,9 +79,8 @@ function App() {
     if (isAuthenticated) {
       setSessionExpiry();
     } else if (isSessionExpired()) {
+      // Clear expired Auth0 timer only; don't force logout/navigation for non-Auth0 sessions
       clearSession();
-      logout({ returnTo: window.location.origin });
-      navigate('/');
     }
 
     // Google credential session logic removed; only backend JWT is used for session/API
@@ -106,10 +102,14 @@ function App() {
           const accessToken = await getAccessTokenSilently();
           await fetchUserDetails(accessToken);
           await fetchUserAddToCart(accessToken);
+          return;
         } catch (err) {
           // Optionally handle token errors
         }
       }
+      // Fallback: attempt cookie-only requests (no Authorization header)
+      await fetchUserDetails();
+      await fetchUserAddToCart();
     };
     fetchProtectedData();
     // eslint-disable-next-line

@@ -10,11 +10,26 @@ module.exports = async function attachUserId(req, res, next) {
     if (!payload) return res.status(401).json({ error: true, message: 'No JWT payload found', success: false });
 
     if (payload.sub) {
-      // Auth0 login
-      user = await userModel.findOne({ auth0Id: payload.sub });
+      // Auth0 login: upsert by auth0Id
+      const auth0Id = payload.sub;
+      const email = payload.email;
+      const name = payload.name || payload['name'];
+      const picture = payload.picture;
+      user = await userModel.findOneAndUpdate(
+        { auth0Id },
+        { $setOnInsert: { auth0Id, email, name, profilePic: picture } },
+        { new: true, upsert: true }
+      );
     } else if (payload.email) {
-      // Google login
-      user = await userModel.findOne({ email: payload.email });
+      // Google login: upsert by email
+      const email = payload.email;
+      const name = payload.name;
+      const picture = payload.picture;
+      user = await userModel.findOneAndUpdate(
+        { email },
+        { $setOnInsert: { email, name, profilePic: picture } },
+        { new: true, upsert: true }
+      );
     }
     if (!user) return res.status(401).json({ error: true, message: 'User not found in DB', success: false });
     req.userId = user._id;

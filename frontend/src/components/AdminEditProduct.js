@@ -59,9 +59,7 @@ const AdminEditProduct = ({ onClose, productData, fetchdata }) => {
     });
   };
 
-  {
-    /**upload product */
-  }
+  // upload product helpers initialized below
   const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = require('@auth0/auth0-react');
   const { getJwtSession, isJwtSessionExpired } = require('../helpers/jwtSession');
 
@@ -86,17 +84,12 @@ const AdminEditProduct = ({ onClose, productData, fetchdata }) => {
       accessToken = jwt;
     }
 
-    if (!accessToken) {
-      toast.error('Not authenticated');
-      return;
-    }
-
     const response = await fetch(SummaryApi.updateProduct.url, {
       method: SummaryApi.updateProduct.method,
       credentials: 'include',
       headers: {
         'content-type': 'application/json',
-        Authorization: `Bearer ${accessToken}`,
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
       },
       body: JSON.stringify(data),
     });
