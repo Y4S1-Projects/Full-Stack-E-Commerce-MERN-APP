@@ -7,6 +7,10 @@ if (!backendDomin) {
 }
 
 const SummaryApi = {
+  googleLogin: {
+    url: `${backendDomin}/api/auth/google`,
+    method: 'post',
+  },
   signUP: {
     url: `${backendDomin}/api/signup`,
     method: 'post',

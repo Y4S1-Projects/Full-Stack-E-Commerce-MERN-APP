@@ -8,6 +8,7 @@ import displayINRCurrency from '../helpers/displayCurrency';
 import CategoryWiseProductDisplay from '../components/CategoryWiseProductDisplay';
 import addToCart from '../helpers/addToCart';
 import Context from '../context';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const ProductDetails = () => {
   const [data, setData] = useState({
@@ -72,15 +73,30 @@ const ProductDetails = () => {
     setZoomImageCoordinate({ x, y });
   }, []);
 
-  const handleLeaveImageZoom = () => setZoomImage(false);
+  const handleLeaveImageZoom = () => {
+    setZoomImage(false);
+  };
+
+  // Auth0
+  const { getAccessTokenSilently, isAuthenticated, loginWithRedirect } = useAuth0();
 
   const handleAddToCart = async (e, id) => {
-    await addToCart(e, id);
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+    const accessToken = await getAccessTokenSilently();
+    await addToCart(e, id, accessToken);
     fetchUserAddToCart();
   };
 
   const handleBuyProduct = async (e, id) => {
-    await addToCart(e, id);
+    if (!isAuthenticated) {
+      loginWithRedirect();
+      return;
+    }
+    const accessToken = await getAccessTokenSilently();
+    await addToCart(e, id, accessToken);
     fetchUserAddToCart();
     navigate('/cart');
   };
@@ -159,6 +175,8 @@ const ProductDetails = () => {
               <button className="w-full h-6 rounded lg:h-8 bg-slate-200 animate-pulse" />
             </div>
             <div className="w-full">
+              <p className="w-full h-6 my-1 font-medium rounded text-slate-600 lg:h-8 bg-slate-200 animate-pulse"></p>
+              <p className="w-full h-10 rounded bg-slate-200 animate-pulse lg:h-12"></p>
               <p className="w-full h-6 my-1 font-medium rounded text-slate-600 lg:h-8 bg-slate-200 animate-pulse" />
               <p className="w-full h-10 rounded bg-slate-200 animate-pulse lg:h-12" />
             </div>

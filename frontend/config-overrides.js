@@ -42,6 +42,13 @@ module.exports = function override(config, env) {
         warnings: false,
         errors: true,
       },
+      // Use new setupMiddlewares instead of deprecated onBeforeSetupMiddleware/onAfterSetupMiddleware
+      setupMiddlewares: (middlewares, devServer) => {
+        if (!devServer) {
+          throw new Error('webpack-dev-server is not defined');
+        }
+        return middlewares;
+      },
     };
   }
 

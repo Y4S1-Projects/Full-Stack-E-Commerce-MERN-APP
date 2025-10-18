@@ -3,6 +3,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 require('dotenv').config();
+
 const connectDB = require('./config/db');
 const router = require('./routes');
 
@@ -18,7 +19,13 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-        scriptSrc: ["'self'"],
+        scriptSrc: [
+          "'self'",
+          'https://accounts.google.com',
+          'https://accounts.google.com/gsi/client',
+          'https://apis.google.com',
+          'https://*.gstatic.com',
+        ],
         imgSrc: ["'self'", 'data:', 'blob:', 'http://res.cloudinary.com', 'https://res.cloudinary.com'],
         connectSrc: [
           "'self'",
@@ -44,7 +51,7 @@ app.use(
     hsts:
       process.env.NODE_ENV === 'production'
         ? {
-            maxAge: 63072000, 
+            maxAge: 63072000,
             includeSubDomains: true,
             preload: true,
           }
@@ -87,9 +94,6 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
-// Ensure Express responds to CORS preflight for all routes
-app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
