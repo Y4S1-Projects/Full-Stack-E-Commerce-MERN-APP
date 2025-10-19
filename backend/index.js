@@ -9,6 +9,8 @@ const router = require('./routes');
 
 const app = express();
 
+app.set('trust proxy', 1); // Enable if behind HTTPS proxy
+
 // -------------------------
 // Helmet security config
 // -------------------------
@@ -48,6 +50,8 @@ app.use(
       action: 'deny',
     },
     // Strict-Transport-Security (HSTS) header - only in production
+    crossOriginEmbedderPolicy: false,
+  
     hsts:
       process.env.NODE_ENV === 'production'
         ? {

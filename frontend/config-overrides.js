@@ -104,6 +104,19 @@ module.exports = function override(config, env) {
         };
       }
     }
+
+    config.optimization = {
+      minimize: true,
+      minimizer: [
+        new TerserPlugin({
+          terserOptions: {
+            format: { comments: false },
+            compress: { drop_console: true, drop_debugger: true },
+          },
+          extractComments: false,
+        }),
+      ],
+    };
   }
 
   // Production optimizations to prevent IP disclosure
