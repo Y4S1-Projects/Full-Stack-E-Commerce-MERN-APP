@@ -1,5 +1,3 @@
-// middleware/auth0Token.js
-
 const { auth } = require('express-oauth2-jwt-bearer');
 const logger = require('../utils/logger');
 

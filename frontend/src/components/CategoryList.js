@@ -53,9 +53,7 @@ const CategoryList = () => {
                     className="object-scale-down h-full transition-all mix-blend-multiply hover:scale-125"
                   />
                 </div>
-                <p className="text-sm text-center capitalize md:text-base">
-                  {sanitizeInput(product?.category)}
-                </p>
+                <p className="text-sm text-center capitalize md:text-base">{sanitizeInput(product?.category)}</p>
               </Link>
             ))}
       </div>

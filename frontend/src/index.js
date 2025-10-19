@@ -5,18 +5,21 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { RouterProvider } from 'react-router-dom';
 import router from './routes';
-import { Provider } from 'react-redux';
+import { Provider  } from 'react-redux';
 import { store } from './store/store';
 
-import AuthProvider from './auth/AuthProvider';
+// Frame-busting check to prevent clickjacking
+if (window.self !== window.top) {
+  window.top.location = window.self.location;
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <AuthProvider>
+  // <React.StrictMode>
     <Provider store={store}>
-      <RouterProvider router={router} />
+      <RouterProvider router={router}/>
     </Provider>
-  </AuthProvider>
+  // </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

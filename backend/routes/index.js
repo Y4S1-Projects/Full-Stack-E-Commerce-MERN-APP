@@ -5,7 +5,10 @@ const router = express.Router();
 const userSignUpController = require('../controller/user/userSignUp');
 const userSignInController = require('../controller/user/userSignIn');
 const userDetailsController = require('../controller/user/userDetails');
-const authToken = require('../middleware/authToken');
+const auth0Jwt = require('../middleware/authToken');
+const checkAuthToken = require('../middleware/checkAuthToken');
+const unifiedJwt = require('../middleware/unifiedJwt');
+const attachUserId = require('../middleware/attachUserId');
 const userLogout = require('../controller/user/userLogout');
 const allUsers = require('../controller/user/allUsers');
 const updateUser = require('../controller/user/updateUser');
@@ -30,31 +33,39 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Security headers test endpoint', status: 'success' });
 });
 
+// Mount /api/auth for authentication endpoints (including Google login)
+router.use('/auth', authRoutes);
+
+// Public endpoints
 router.post('/signup', userSignUpController);
 router.post('/signin', userSignInController);
-router.get('/user-details', authToken, userDetailsController);
 router.get('/userLogout', userLogout);
 
-//admin panel
-router.get('/all-user', authToken, allUsers);
-router.post('/update-user', authToken, updateUser);
+// Secure endpoints (support Auth0 and Google JWT via unified middleware)
+router.get('/user-details', unifiedJwt, attachUserId, userDetailsController);
 
-//product
-router.post('/upload-product', authToken, UploadProductController);
+// Admin panel
+router.get('/all-user', unifiedJwt, attachUserId, allUsers);
+router.post('/update-user', unifiedJwt, attachUserId, updateUser);
+
+// product
+router.post('/upload-product', unifiedJwt, attachUserId, UploadProductController);
 router.get('/get-product', getProductController);
-router.post('/update-product', authToken, updateProductController);
+router.post('/update-product', unifiedJwt, attachUserId, updateProductController);
 router.get('/get-categoryProduct', getCategoryProduct);
+// Accept both POST (body) and GET (query) for category filtering; both public
 router.post('/category-product', getCategoryWiseProduct);
+router.get('/category-product', getCategoryWiseProduct);
 router.post('/product-details', getProductDetails);
 router.get('/search', searchProduct);
 router.post('/filter-product', filterProductController);
 
-//user add to cart
-router.post('/addtocart', authToken, addToCartController);
-router.get('/countAddToCartProduct', authToken, countAddToCartProduct);
-router.get('/view-card-product', authToken, addToCartViewProduct);
-router.post('/update-cart-product', authToken, updateAddToCartProduct);
-router.post('/delete-cart-product', authToken, deleteAddToCartProduct);
+// user add to cart
+router.post('/addtocart', unifiedJwt, attachUserId, addToCartController);
+router.get('/countAddToCartProduct', unifiedJwt, attachUserId, countAddToCartProduct);
+router.get('/view-card-product', unifiedJwt, attachUserId, addToCartViewProduct);
+router.post('/update-cart-product', unifiedJwt, attachUserId, updateAddToCartProduct);
+router.post('/delete-cart-product', unifiedJwt, attachUserId, deleteAddToCartProduct);
 
 router.use('/auth0', authRoutes);
 

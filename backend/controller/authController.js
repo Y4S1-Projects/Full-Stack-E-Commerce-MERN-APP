@@ -50,11 +50,9 @@ exports.login = async (req, res) => {
 
     if (!user) throw new Error('User not found in local DB');
 
-    // 4. Store token in cookie
-    res.cookie('token', tokenSet.id_token, {
-      httpOnly: true,
-      secure: false, // ⚠️ set true in production
-    });
+    // 4. Store token in cookies (both names for compatibility)
+    const { setAuthCookies } = require('../utils/authCookie');
+    setAuthCookies(res, tokenSet.id_token);
 
     logger.info(`User logged in: ${email} (${decoded.sub})`);
     return successResponse(res, { user, tokens: tokenSet }, 'Login successful');

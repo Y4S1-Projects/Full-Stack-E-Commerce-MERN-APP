@@ -1,32 +1,40 @@
-const productModel = require("../../models/productModel")
-const { sanitizeInput } = require('../../helpers/sanitize')
+const userModel = require("../../models/userModel")
 
-const filterProductController = async(req,res)=>{
- try{
-        const categoryList = req?.body?.category || []
+async function updateUser(req,res){
+    try{
+        const sessionUser = req.userId
 
-        // Sanitize category list
-        const sanitizedCategoryList = categoryList.map(category => sanitizeInput(category))
+        const { userId , email, name, role} = req.body
 
-        const products = await productModel.find({
-            category :  {
-                "$in" : sanitizedCategoryList
-            }
-        })
+        const payload = {
+            ...( email && { email : email}),
+            ...( name && { name : name}),
+            ...( role && { role : role}),
+        }
 
+        const user = await userModel.findById(sessionUser)
+
+        console.log("user.role",user.role)
+
+
+
+        const updateUser = await userModel.findByIdAndUpdate(userId,payload)
+
+        
         res.json({
-            data : products,
-            message : "product",
-            error : false,
-            success : true
+            data : updateUser,
+            message : "User Updated",
+            success : true,
+            error : false
         })
- }catch(err){
-    res.json({
-        message : err.message || err,
-        error : true,
-        success : false
-    })
- }
+    }catch(err){
+        res.status(400).json({
+            message : err.message || err,
+            error : true,
+            success : false
+        })
+    }
 }
 
-module.exports = filterProductController
+
+module.exports = updateUser
