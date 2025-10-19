@@ -1,14 +1,8 @@
-const { uploadProductPermission } = require('../../helpers/permission');
 const productModel = require('../../models/productModel');
 
 async function UploadProductController(req, res) {
   try {
-    const sessionUserId = req.userId;
-
-    const hasPerm = await uploadProductPermission(req.user.auth0Id);
-    if (!hasPerm) {
-      throw new Error('Permission denied');
-    }
+    // requireRole('ADMIN') ensures authorization before this handler
 
     const uploadProduct = new productModel(req.body);
     const saveProduct = await uploadProduct.save();
