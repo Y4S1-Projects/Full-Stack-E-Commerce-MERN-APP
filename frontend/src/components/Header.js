@@ -1,6 +1,6 @@
-
-import React, { useContext, useState } from 'react';
-import DOMPurify from 'dompurify';
+import React, { useContext, useState, useEffect } from 'react';
+import { isSessionExpired, clearSession } from '../helpers/session';
+import { useAuth0 } from '@auth0/auth0-react';
 import Logo from './Logo';
 import { GrSearch } from 'react-icons/gr';
 import { FaRegCircleUser } from 'react-icons/fa6';
@@ -12,23 +12,69 @@ import { toast } from 'react-toastify';
 import { setUserDetails } from '../store/userSlice';
 import ROLE from '../common/role';
 import Context from '../context';
+import DOMPurify from 'dompurify';
 
 const Header = () => {
   const user = useSelector((state) => state?.user?.user);
+  const { logout } = useAuth0();
+  const navigate = useNavigate();
+  // Auto-logout if session expired
+  useEffect(() => {
+    if (user?._id && isSessionExpired()) {
+      clearSession();
+      logout({ returnTo: window.location.origin });
+      navigate('/');
+    }
+  }, [user, logout, navigate]);
   const dispatch = useDispatch();
   const [menuDisplay, setMenuDisplay] = useState(false);
   const context = useContext(Context);
-  const navigate = useNavigate();
   const searchInput = useLocation();
   const URLSearch = new URLSearchParams(searchInput?.search);
-  const searchQuery = URLSearch.getAll('q');
+  const searchQuery = URLSearch.get('q') || '';
   const [search, setSearch] = useState(searchQuery);
+
+  // Keep search input in sync with URL
+  React.useEffect(() => {
+    const urlSearch = new URLSearchParams(searchInput?.search);
+    setSearch(urlSearch.get('q') || '');
+  }, [searchInput.search]);
+
+  // Close menu on logout
+  React.useEffect(() => {
+    if (!user?._id) setMenuDisplay(false);
+  }, [user]);
 
   const sanitizeInput = (input) => {
     return DOMPurify.sanitize(input || '', { ALLOWED_TAGS: [] });
   };
 
-  const handleLogout = async () => {
+  // Accept accessToken as optional param
+  const handleLogout = async (accessToken = null) => {
+    // Always clear session (JWT, Auth0, Google)
+    clearSession();
+    // Also clear JWT session for all login types
+    if (typeof window !== 'undefined') {
+      // Defensive: try both helpers if available
+      try {
+        const { clearJwtSession } = require('../helpers/jwtSession');
+        clearJwtSession();
+      } catch (e) {
+        if (window.localStorage) {
+          window.localStorage.removeItem('jwt_token');
+          window.localStorage.removeItem('jwt_expiry');
+        }
+      }
+    }
+    dispatch(setUserDetails(null));
+
+    // Google credential logic removed; only backend JWT is used for session/API
+
+    // Otherwise, call backend logout (for Auth0/JWT)
+    const headers = {};
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
     const fetchData = await fetch(SummaryApi.logout_user.url, {
       method: SummaryApi.logout_user.method,
       credentials: 'include',
@@ -38,9 +84,10 @@ const Header = () => {
 
     if (data.success) {
       toast.success(data.message);
-      dispatch(setUserDetails(null));
       navigate('/');
-    } else if (data.error) {
+    }
+
+    if (data.error) {
       toast.error(data.message);
     }
   };
@@ -99,12 +146,12 @@ const Header = () => {
             )}
 
             {menuDisplay && (
-              <div className="absolute bottom-0 p-2 bg-white rounded shadow-lg top-11 h-fit">
+              <div className="absolute left-0 right-0 z-50 p-2 bg-white rounded shadow-lg top-14 h-fit min-w-[150px]">
                 <nav>
                   {user?.role === ROLE.ADMIN && (
                     <Link
                       to={'/admin-panel/all-products'}
-                      className="hidden p-2 whitespace-nowrap md:block hover:bg-slate-100"
+                      className="block p-2 whitespace-nowrap hover:bg-slate-100"
                       onClick={() => setMenuDisplay((prev) => !prev)}
                     >
                       Admin Panel
@@ -129,17 +176,11 @@ const Header = () => {
 
           <div>
             {user?._id ? (
-              <button
-                onClick={handleLogout}
-                className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700"
-              >
+              <button onClick={handleLogout} className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700">
                 Logout
               </button>
             ) : (
-              <Link
-                to={'/login'}
-                className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700"
-              >
+              <Link to={'/login'} className="px-3 py-1 text-white bg-red-600 rounded-full hover:bg-red-700">
                 Login
               </Link>
             )}

@@ -1,17 +1,15 @@
 import SummaryApi from '../common';
 import { toast } from 'react-toastify';
 
-// Accept accessToken as optional param
-const addToCart = async (e, id, accessToken = null) => {
+// Support cookie-based auth and optional accessToken
+const addToCart = async (e, id, accessToken) => {
   e?.stopPropagation();
   e?.preventDefault();
 
   const headers = {
     'content-type': 'application/json',
   };
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`;
-  }
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
   const response = await fetch(SummaryApi.addToCartProduct.url, {
     method: SummaryApi.addToCartProduct.method,
     credentials: 'include',

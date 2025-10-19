@@ -1,10 +1,12 @@
-
 import React, { useContext, useEffect, useState } from 'react';
-import DOMPurify from 'dompurify';
+import { useAuth0 } from '@auth0/auth0-react';
 import SummaryApi from '../common';
 import Context from '../context';
 import displayINRCurrency from '../helpers/displayCurrency';
 import { MdDelete } from 'react-icons/md';
+import { isJwtSessionExpired } from '../helpers/jwtSession';
+import { authenticatedGet, authenticatedPost, getAccessToken } from '../helpers/apiHelper';
+import DOMPurify from 'dompurify';
 
 const Cart = () => {
   const [data, setData] = useState([]);
@@ -12,97 +14,107 @@ const Cart = () => {
   const context = useContext(Context);
   const loadingCart = new Array(4).fill(null);
 
-  // Sanitization function
+  const auth0 = useAuth0();
+  const { isAuthenticated, loginWithRedirect } = auth0;
+
+  // Sanitize text to prevent XSS
   const sanitizeText = (text) => {
     return DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
   };
 
+  // Support both Auth0 and legacy JWT session
   const fetchData = async () => {
-    const response = await fetch(SummaryApi.addToCartProductView.url, {
-      method: SummaryApi.addToCartProductView.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-    });
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken) {
+        setData([]);
+        return;
+      }
 
-    const responseData = await response.json();
+      const responseData = await authenticatedGet(SummaryApi.addToCartProductView.url, auth0);
 
-    if (responseData.success) {
-      setData(responseData.data);
+      if (responseData.success) {
+        setData(responseData.data);
+      }
+    } catch (error) {
+      console.error('Error fetching cart data:', error);
+      setData([]);
     }
   };
 
   useEffect(() => {
     setLoading(true);
     fetchData().finally(() => setLoading(false));
-  }, []);
+    // eslint-disable-next-line
+  }, [isAuthenticated]);
 
   const increaseQty = async (id, qty) => {
-    const response = await fetch(SummaryApi.updateCartProduct.url, {
-      method: SummaryApi.updateCartProduct.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+
+      const responseData = await authenticatedPost(SummaryApi.updateCartProduct.url, auth0, {
         _id: id,
         quantity: qty + 1,
-      }),
-    });
-
-    const responseData = await response.json();
-
-    if (responseData.success) {
-      fetchData();
-    }
-  };
-
-  const decreaseQty = async (id, qty) => {
-    if (qty >= 2) {
-      const response = await fetch(SummaryApi.updateCartProduct.url, {
-        method: SummaryApi.updateCartProduct.method,
-        credentials: 'include',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          _id: id,
-          quantity: qty - 1,
-        }),
       });
-
-      const responseData = await response.json();
 
       if (responseData.success) {
         fetchData();
       }
+    } catch (error) {
+      console.error('Error increasing quantity:', error);
+    }
+  };
+
+  const decreaseQty = async (id, qty) => {
+    if (qty < 2) return;
+
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+
+      const responseData = await authenticatedPost(SummaryApi.updateCartProduct.url, auth0, {
+        _id: id,
+        quantity: qty - 1,
+      });
+
+      if (responseData.success) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error decreasing quantity:', error);
     }
   };
 
   const deleteCartProduct = async (id) => {
-    const response = await fetch(SummaryApi.deleteCartProduct.url, {
-      method: SummaryApi.deleteCartProduct.method,
-      credentials: 'include',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
+    try {
+      const accessToken = await getAccessToken(auth0);
+      if (!accessToken || isJwtSessionExpired()) {
+        loginWithRedirect();
+        return;
+      }
+
+      const responseData = await authenticatedPost(SummaryApi.deleteCartProduct.url, auth0, {
         _id: id,
-      }),
-    });
+      });
 
-    const responseData = await response.json();
-
-    if (responseData.success) {
-      fetchData();
-      context.fetchUserAddToCart();
+      if (responseData.success) {
+        fetchData();
+        context.fetchUserAddToCart(accessToken);
+      }
+    } catch (error) {
+      console.error('Error deleting cart product:', error);
     }
   };
 
   const totalQty = data.reduce((previousValue, currentValue) => previousValue + currentValue.quantity, 0);
-  const totalPrice = data.reduce((prev, curr) => prev + (curr.quantity * curr?.productId?.sellingPrice), 0);
-
+  const totalPrice = data.reduce((preve, curr) => preve + curr.quantity * curr?.productId?.sellingPrice, 0);
   return (
     <div className="container mx-auto">
       <div className="my-3 text-lg text-center">
@@ -176,7 +188,7 @@ const Cart = () => {
               })}
         </div>
 
-        {/* summary */}
+        {/***summary  */}
         <div className="w-full max-w-sm mt-5 lg:mt-0">
           {loading ? (
             <div className="border h-36 bg-slate-200 border-slate-300 animate-pulse"></div>
