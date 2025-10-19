@@ -50,6 +50,60 @@ module.exports = function override(config, env) {
         return middlewares;
       },
     };
+
+    // Backwards-compat shim: if something still sets the deprecated
+    // onBeforeSetupMiddleware / onAfterSetupMiddleware hooks, map them
+    // into the newer setupMiddlewares function. This preserves existing
+    // behavior while avoiding deprecation warnings from newer
+    // webpack-dev-server versions.
+    if (config.devServer) {
+      const beforeHook = config.devServer.onBeforeSetupMiddleware;
+      const afterHook = config.devServer.onAfterSetupMiddleware;
+      const originalSetup = config.devServer.setupMiddlewares;
+
+      if (beforeHook || afterHook) {
+        config.devServer.setupMiddlewares = (middlewares, devServer) => {
+          try {
+            if (typeof beforeHook === 'function') {
+              // Older hooks sometimes accepted (devServer) or (app, server).
+              // Call with devServer first; if it expects (app, server) it can
+              // still access server.app from devServer.
+              beforeHook(devServer);
+            }
+          } catch (e) {
+            // swallow errors to avoid breaking dev server boot
+            // eslint-disable-next-line no-console
+            console.warn('onBeforeSetupMiddleware shim error:', e && e.message ? e.message : e);
+          }
+
+          // Allow any previously configured setupMiddlewares to run.
+          if (typeof originalSetup === 'function') {
+            try {
+              const maybe = originalSetup(middlewares, devServer);
+              if (Array.isArray(maybe)) middlewares = maybe;
+            } catch (e) {
+              // eslint-disable-next-line no-console
+              console.warn('original setupMiddlewares error:', e && e.message ? e.message : e);
+            }
+          }
+
+          try {
+            if (typeof afterHook === 'function') {
+              afterHook(devServer);
+            }
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn('onAfterSetupMiddleware shim error:', e && e.message ? e.message : e);
+          }
+
+          // Remove deprecated props to avoid duplicate calls and warnings
+          delete config.devServer.onBeforeSetupMiddleware;
+          delete config.devServer.onAfterSetupMiddleware;
+
+          return middlewares;
+        };
+      }
+    }
   }
 
   // Production optimizations to prevent IP disclosure
