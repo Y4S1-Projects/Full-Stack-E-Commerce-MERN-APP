@@ -6,16 +6,25 @@ async function UploadProductController(req, res) {
   try {
     const sessionUserId = req.userId;
 
-    const hasPerm = await uploadProductPermission(req.user.auth0Id);
-    if (!hasPerm) {
-      throw new Error('Permission denied');
+    // Safely resolve auth0Id from possible sources (req.user, req.auth, req.jwtPayload)
+    // Try to resolve auth0Id if provided; allow upload without identity
+    const auth0Id = (req.user && req.user.auth0Id) || (req.auth && req.auth.payload && req.auth.payload.sub) || (req.jwtPayload && req.jwtPayload.sub);
+
+    if (auth0Id) {
+      const hasPerm = await uploadProductPermission(auth0Id);
+      if (!hasPerm) {
+        throw new Error('Permission denied');
+      }
     }
 
     // Sanitize all input data before saving
-        const sanitizedProductData = sanitizeObject(req.body)
-    
-        const uploadProduct = new productModel(sanitizedProductData)
-        const saveProduct = await uploadProduct.save()
+    const sanitizedProductData = sanitizeObject(req.body);
+
+    // If we have a known user, attach uploader reference; otherwise allow anonymous
+    if (req.userId) sanitizedProductData.uploader = req.userId;
+
+    const uploadProduct = new productModel(sanitizedProductData);
+    const saveProduct = await uploadProduct.save();
 
     res.status(201).json({
       message: 'Product upload successfully',

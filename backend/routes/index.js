@@ -49,6 +49,7 @@ router.get('/all-user', allUsers);
 router.post('/update-user', updateUser);
 
 // product
+// Upload product endpoint opened to public (no auth required)
 router.post('/upload-product', UploadProductController);
 router.get('/get-product', getProductController);
 router.post('/update-product', updateProductController);
