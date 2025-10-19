@@ -8,6 +8,8 @@ const router = require('./routes');
 
 const app = express();
 
+app.set('trust proxy', 1); // Enable if behind HTTPS proxy
+
 // -------------------------
 // Helmet security config
 // -------------------------
@@ -41,16 +43,20 @@ app.use(
       action: 'deny',
     },
     // Strict-Transport-Security (HSTS) header - only in production
-    hsts:
-      process.env.NODE_ENV === 'production'
-        ? {
-            maxAge: 63072000, 
-            includeSubDomains: true,
-            preload: true,
-          }
-        : false,
+    crossOriginEmbedderPolicy: false,
   })
 );
+
+// Enable HSTS only for HTTPS production
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+    helmet.hsts({
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    })
+  );
+}
 
 // -------------------------
 // CORS setup (with fallback)
