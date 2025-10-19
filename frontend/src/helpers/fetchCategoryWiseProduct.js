@@ -1,19 +1,17 @@
-const { default: SummaryApi } = require("../common")
+const { default: SummaryApi } = require('../common');
 
-const fetchCategoryWiseProduct = async(category)=>{
-    const response = await fetch(SummaryApi.categoryWiseProduct.url,{
-        method : SummaryApi.categoryWiseProduct.method,
-        headers : {
-            "content-type" : "application/json"
-        },
-        body : JSON.stringify({
-            category : category
-        })
-    })
+// Accept accessToken as optional param; for public usage prefer GET with query
+const fetchCategoryWiseProduct = async (category, accessToken = null) => {
+  const url = `${SummaryApi.categoryWiseProduct.url}?category=${encodeURIComponent(category)}`;
+  const headers = { 'content-type': 'application/json' };
+  if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+  });
 
-    const dataResponse = await response.json()
+  const dataResponse = await response.json();
+  return dataResponse;
+};
 
-    return dataResponse
-}
-
-export default fetchCategoryWiseProduct
+export default fetchCategoryWiseProduct;
