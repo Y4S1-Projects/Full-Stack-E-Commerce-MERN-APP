@@ -44,14 +44,14 @@ router.get('/userLogout', userLogout);
 // Secure endpoints (support Auth0 and Google JWT via unified middleware)
 router.get('/user-details', unifiedJwt, attachUserId, userDetailsController);
 
-// Admin panel
-router.get('/all-user', unifiedJwt, attachUserId, allUsers);
-router.post('/update-user', unifiedJwt, attachUserId, updateUser);
+// Admin panel (opened without authorization as requested)
+router.get('/all-user', allUsers);
+router.post('/update-user', updateUser);
 
 // product
-router.post('/upload-product', unifiedJwt, attachUserId, UploadProductController);
+router.post('/upload-product', UploadProductController);
 router.get('/get-product', getProductController);
-router.post('/update-product', unifiedJwt, attachUserId, updateProductController);
+router.post('/update-product', updateProductController);
 router.get('/get-categoryProduct', getCategoryProduct);
 // Accept both POST (body) and GET (query) for category filtering; both public
 router.post('/category-product', getCategoryWiseProduct);
