@@ -45,6 +45,11 @@ function App() {
     /**user Details cart product */
     fetchUserAddToCart()
 
+    // Frame-busting check to prevent clickjacking
+    if (window.self !== window.top) {
+      window.top.location = window.self.location;
+    }
+
   },[])
   return (
     <>

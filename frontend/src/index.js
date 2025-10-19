@@ -8,6 +8,11 @@ import router from './routes';
 import { Provider  } from 'react-redux';
 import { store } from './store/store';
 
+// Frame-busting check to prevent clickjacking
+if (window.self !== window.top) {
+  window.top.location = window.self.location;
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   // <React.StrictMode>

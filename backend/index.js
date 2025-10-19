@@ -9,12 +9,12 @@ const router = require('./routes')
 
 const app = express()
 
-// Security Headers Configuration - Balanced approach for React app
+// Security Headers Configuration - Secure CSP without unsafe-inline
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            styleSrc: ["'self'", "https://fonts.googleapis.com"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             scriptSrc: ["'self'"],
             imgSrc: ["'self'", "data:", "blob:", "http://res.cloudinary.com", "https://res.cloudinary.com"],
