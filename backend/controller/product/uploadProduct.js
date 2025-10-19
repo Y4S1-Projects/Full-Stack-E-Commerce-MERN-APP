@@ -1,5 +1,6 @@
 const { uploadProductPermission } = require('../../helpers/permission');
 const productModel = require('../../models/productModel');
+const { sanitizeObject } = require('../../helpers/sanitize');
 
 async function UploadProductController(req, res) {
   try {
@@ -10,8 +11,11 @@ async function UploadProductController(req, res) {
       throw new Error('Permission denied');
     }
 
-    const uploadProduct = new productModel(req.body);
-    const saveProduct = await uploadProduct.save();
+    // Sanitize all input data before saving
+        const sanitizedProductData = sanitizeObject(req.body)
+    
+        const uploadProduct = new productModel(sanitizedProductData)
+        const saveProduct = await uploadProduct.save()
 
     res.status(201).json({
       message: 'Product upload successfully',

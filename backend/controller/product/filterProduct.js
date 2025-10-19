@@ -1,12 +1,16 @@
-const productModel = require("../../models/productModel")
+const productModel = require("../../models/productModel");
+const { sanitizeInput } = require('../../helpers/sanitize');
 
 const filterProductController = async(req,res)=>{
  try{
         const categoryList = req?.body?.category || []
 
+        // Sanitize category list
+        const sanitizedCategoryList = categoryList.map(category => sanitizeInput(category))
+
         const product = await productModel.find({
             category :  {
-                "$in" : categoryList
+                "$in" : sanitizedCategoryList
             }
         })
 
